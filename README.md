@@ -51,8 +51,15 @@ An independent installation does not send its users, documents or telemetry to t
 bun run typecheck
 bun run lint
 bun run test
-bun run build
 ```
+
+Production builds require an explicit HTTPS application address. For a local compilation check:
+
+```sh
+NEXT_PUBLIC_APP_URL=https://sherlock.example.invalid bun run build
+```
+
+The reserved `.invalid` address is only for this check. For a hosted installation, use its actual HTTPS address and configure the services in [the self-hosting guide](docs/self-hosting.md). A successful build does not verify hosted authentication or email delivery.
 
 Tests use fictional fixtures and mocked service boundaries where appropriate. See [contributing](CONTRIBUTING.md) and [security](SECURITY.md).
 

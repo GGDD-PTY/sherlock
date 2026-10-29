@@ -366,6 +366,56 @@ describe('temporary intake session API', () => {
     )
     expect(deleted.status).toBe(200)
     expect(await deleted.json()).toMatchObject({ deleted: true })
+    expect(deleted.headers.get('set-cookie')).toContain('Max-Age=0')
+    expect(deleted.headers.get('cache-control')).toContain('no-store')
+    expect(mockMutation).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        sessionToken: SESSION_TOKEN,
+        serverIssuedAt: expect.any(Number),
+        proofNonce: expect.any(String),
+        serverProof: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/),
+      })
+    )
+  })
+
+  it.each(['disabled', 'missing-session', 'missing-csrf', 'cross-origin'])(
+    'rejects data deletion before backend effects when %s',
+    async (scenario) => {
+      if (scenario === 'disabled') vi.stubEnv('INTAKE_DEMO_MODE', 'false')
+      const csrfToken = createIntakeCsrfToken({ binding: SESSION_TOKEN })
+      const response = await deleteIntakeData(
+        new NextRequest('http://localhost:3000/api/intake/data', {
+          method: 'DELETE',
+          headers: {
+            Origin:
+              scenario === 'cross-origin' ? 'https://attacker.example' : 'http://localhost:3000',
+            ...(scenario === 'missing-session' ? {} : { Cookie: authorityCookies(csrfToken) }),
+            ...(scenario === 'missing-csrf' ? {} : { [INTAKE_CSRF_HEADER]: csrfToken }),
+          },
+        })
+      )
+      expect(response.status).toBe(scenario === 'disabled' ? 404 : 403)
+      expect(mockMutation).not.toHaveBeenCalled()
+    }
+  )
+
+  it('preserves deletion authority when the backend fails', async () => {
+    const csrfToken = createIntakeCsrfToken({ binding: SESSION_TOKEN })
+    mockMutation.mockRejectedValueOnce(new Error('private-backend-detail'))
+    const response = await deleteIntakeData(
+      new NextRequest('http://localhost:3000/api/intake/data', {
+        method: 'DELETE',
+        headers: {
+          Origin: 'http://localhost:3000',
+          Cookie: authorityCookies(csrfToken),
+          [INTAKE_CSRF_HEADER]: csrfToken,
+        },
+      })
+    )
+    expect(response.status).toBe(503)
+    expect(response.headers.get('set-cookie')).toBeNull()
+    expect(JSON.stringify(await response.json())).not.toContain('private-backend-detail')
   })
 
   it.each([
