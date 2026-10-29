@@ -1,0 +1,19 @@
+{
+  "name": "mog-sidecar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sidecar Vite del visor XLSX del VDR. Compila a ../public/mog (gitignored) y se sirve como estatico bajo /mog/. Nunca se importa desde el bundle de Next.",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@mog-sdk/spreadsheet-app": "0.10.8-rc.6",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "vite": "7.3.7"
+  }
+}

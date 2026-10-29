@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+
+# Convex generated files
+convex/_generated/
+
+# Cache
+.cache/
+
+# Coverage
+coverage/
+
+# Lock files
+bun.lock
+package-lock.json
+yarn.lock
+
+# Auto-generated
+*.min.js
+*.min.css
+
+# Vercel
+.vercel/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Generated docs (may have specific formatting)
+docs/generated/**/*.md
+
+# Byte-pinned test fixtures (contract-envelope.test.ts asserts exact length + sha256)
+src/__tests__/fixtures/
+
+# Assets generados de los visores del VDR (sidecar Mog + pdfjs)
+public/mog/
+public/pdfjs/
+mog-sidecar/dist/

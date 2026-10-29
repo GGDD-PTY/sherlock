@@ -1,0 +1,8 @@
+*.pdf binary
+*.xlsx binary
+*.docx binary
+*.pptx binary
+*.png binary
+*.ico binary
+*.woff2 binary
+docs/licenses/* -whitespace

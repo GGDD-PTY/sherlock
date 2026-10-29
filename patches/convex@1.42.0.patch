@@ -1,0 +1,28 @@
+diff --git a/dist/cli.bundle.cjs b/dist/cli.bundle.cjs
+index f5d08ccd38f7ad74a4c71ddc44a1816888fdc4ca..ba8bd3c50fb619ac39f1596e42a18b3fe7fff37b 100644
+--- a/dist/cli.bundle.cjs
++++ b/dist/cli.bundle.cjs
+@@ -53879,6 +53879,9 @@ async function runLocalBackend(ctx, args) {
+   ctx.fs.mkdir(deploymentDir, { recursive: true });
+   const deploymentNameSha = (0, import_crypto3.createHash)("sha256").update(args.deploymentName).digest("hex");
+   const commandArgs = [
++    "--interface",
++    "127.0.0.1",
++    "--disable-beacon",
+     "--port",
+     ports.cloud.toString(),
+     "--site-proxy-port",
+diff --git a/src/cli/lib/localDeployment/run.ts b/src/cli/lib/localDeployment/run.ts
+index 0aa0536e4c306406a4a38a7b233f02f484a1b071..a4415306ab710b91fa714c0bac2a047d0fd380cf 100644
+--- a/src/cli/lib/localDeployment/run.ts
++++ b/src/cli/lib/localDeployment/run.ts
+@@ -61,6 +61,9 @@ export async function runLocalBackend(
+     .update(args.deploymentName)
+     .digest("hex");
+   const commandArgs = [
++    "--interface",
++    "127.0.0.1",
++    "--disable-beacon",
+     "--port",
+     ports.cloud.toString(),
+     "--site-proxy-port",

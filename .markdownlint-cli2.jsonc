@@ -1,0 +1,16 @@
+{
+  // First PR only. Scoped so lint:md exits 0 without rewriting docs/.
+  // Vale is out: no styles and no Maintainer yes.
+  "globs": ["docs/AGENTS.md"],
+  "ignores": [
+    "**/node_modules/**",
+    "**/_generated/**",
+    "**/.git/**",
+    "**/coverage/**",
+    "**/playwright-report/**",
+    "**/test-results/**"
+  ],
+  "config": {
+    "MD013": false
+  }
+}

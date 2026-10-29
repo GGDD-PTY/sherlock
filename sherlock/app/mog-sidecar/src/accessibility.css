@@ -1,0 +1,25 @@
+/* Importado despues de Mog: eleva solo el texto terciario del status bar al
+   token secundario que ya cambia con el tema. Sin hex ni pigmento Sherlock. */
+[data-testid='panel-status-bar'] .text-ss-text-tertiary {
+  color: var(--color-ss-text-secondary) !important;
+}
+
+/* Los anuncios puente viven fuera del root React y siguen disponibles para
+   lectores de pantalla sin ocupar espacio ni contaminar el role=grid. */
+[data-sherlock-live-region-bridge] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Controles de desarrollo fuera del visor del cliente. */
+#root [data-testid='debug-record-button'],
+#root [title='Split view coming soon'] {
+  display: none !important;
+}

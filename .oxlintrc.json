@@ -1,0 +1,460 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+
+  // ===========================================================================
+  // oxlint — el lint duro del repo. Corre sobre TODO el arbol (sherlock/app,
+  // repo-full-state-viewer, llm-wiki, scripts), no solo sobre lo que ve ESLint.
+  //
+  // Reparto con ESLint: ESLint conserva `eslint-config-next` — react-hooks, el
+  // compilador de React y las reglas @next/next. oxlint pone encima 13 plugins
+  // y las reglas type-aware de `oxlint-tsgolint`. Los dos corren; oxlint tarda
+  // ~3 s sobre 250 kLOC, asi que va primero.
+  //
+  // Tres niveles, y cada uno significa algo:
+  //   error → bloquea. Son las reglas que hoy estan en CERO: no pueden regresar.
+  //           Las cuatro categorias duras (correctness, suspicious, perf,
+  //           pedantic) entran completas en error, con las excepciones de abajo.
+  //   warn  → deuda real y contada. Cada regla lleva su conteo pinneado al lado
+  //           (`// 338`). Ese numero es el contrato: puede bajar, nunca subir.
+  //   off   → la regla es falsa PARA ESTE STACK. Cada una lleva su razon.
+  //
+  // El trinquete lo adjudica `scripts/oxlint-budget.mjs`, que es lo que corre
+  // `bun run lint:ox` (y con el `bun run lint` del ROOT, y el gate). Comandos:
+  //
+  //   bun run lint:ox           el gate: 0 errores y ninguna regla sobre su pin
+  //   bun run lint:ox:update    baja los pines que bajaron y promueve los ceros
+  //   bun run lint:ox:repin     re-mide todos los pines tras un rebase o un merge
+  //   bun run lint:ox:all       la lista completa, para trabajar la deuda
+  //   bun run lint:ox:fix       los arreglos automaticos seguros
+  //
+  // Al arreglar la ultima ocurrencia de una regla en "warn", sube a "error".
+  // ===========================================================================
+
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "react-perf",
+    "jsx-a11y",
+    "nextjs",
+    "import",
+    "promise",
+    "node",
+    "vitest"
+  ],
+
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error",
+    "pedantic": "error",
+    "style": "off",
+    "restriction": "off",
+    "nursery": "off"
+  },
+
+  "env": { "browser": true, "es2024": true, "node": true },
+
+  "rules": {
+    // --- off: la regla es falsa para este stack (no es deuda) ---
+    "react/react-in-jsx-scope": "off", // React 19 con JSX transform automatico: no se importa React
+    "eslint/no-underscore-dangle": "off", // Convex nombra _id/_creationTime y el repo usa _helpers/ y _generated/
+    "react-perf/jsx-no-new-function-as-prop": "off", // babel-plugin-react-compiler ya memoiza los props inline
+    "react-perf/jsx-no-new-object-as-prop": "off", // idem: lo resuelve el compilador de React
+    "react-perf/jsx-no-new-array-as-prop": "off", // idem: lo resuelve el compilador de React
+    "react-perf/jsx-no-jsx-as-prop": "off", // idem: lo resuelve el compilador de React
+    "eslint/no-await-in-loop": "off", // secuenciar es deliberado: rate limits y orden de mutations en Convex
+    "eslint/require-await": "off", // los handlers de Convex y las route handlers son async por contrato
+    "typescript/require-await": "off", // idem
+    "eslint/no-inline-comments": "off", // los comentarios del repo van en linea y en espanol a proposito
+    "eslint/max-lines": "off", // tope arbitrario de tamano
+    "eslint/max-lines-per-function": "off", // tope arbitrario de tamano
+    "eslint/max-depth": "off", // tope arbitrario de tamano
+    "eslint/max-nested-callbacks": "off", // tope arbitrario de tamano
+    "eslint/max-classes-per-file": "off", // tope arbitrario de tamano
+    "eslint/max-statements": "off", // tope arbitrario de tamano
+    "import/max-dependencies": "off", // tope arbitrario de tamano
+    "jsdoc/require-param": "off", // el contrato del repo son los tipos, no JSDoc
+    "jsdoc/require-param-type": "off", // idem
+    "jsdoc/require-param-description": "off", // idem
+    "jsdoc/require-returns": "off", // idem
+    "jsdoc/require-returns-type": "off", // idem
+    "jsdoc/require-returns-description": "off", // idem
+    "jsdoc/require-throws-type": "off", // idem
+    "vitest/require-mock-type-parameters": "off", // ceremonia sobre vi.fn(); el tipo lo da el sitio de uso
+    "eslint/require-unicode-regexp": "off", // preferencia de forma, no defecto
+    "eslint/no-negated-condition": "off", // preferencia de forma, no defecto
+    "unicorn/no-negated-condition": "off", // preferencia de forma, no defecto
+    "unicorn/consistent-function-scoping": "off", // pelea con los handlers locales de React
+    "eslint/no-warning-comments": "off", // los TODO del repo son deuda anotada, no un error
+    "typescript/prefer-readonly-parameter-types": "off", // pediria reescribir cada firma de props y de ctx
+    "typescript/strict-boolean-expressions": "off", // el repo usa truthiness idiomatico en guardas y en JSX
+    "typescript/no-confusing-void-expression": "off", // pelea con `() => setEstado(v)`, el idioma de los handlers
+
+    // --- error: 79 guardias que hoy estan en cero; ya no pueden regresar ---
+    // eqeqeq sube directo a error el 2026-09-09 ([F] «ajustar el lint y el gate a
+    // que ahora hay effect»): las 24 ocurrencias en warn (pin 23, mas el sitio
+    // nuevo de alert.tsx) son, las 24, `== null`/`!= null` — el idioma que cubre
+    // null Y undefined en una sola comparacion. La propia regla trae la opcion
+    // para esto (`NullType` en configuration_schema.json: "always" | "never" |
+    // "ignore"); no es deuda de Effect, es un patron que aparece en convex/,
+    // components/ y scripts/ por igual y que iba a seguir empujando el pin para
+    // siempre. Con `null: "ignore"` el conteo real (== / != que no sean contra
+    // null) es cero, así que entra directo a error en vez de warn con pin.
+    "eslint/eqeqeq": ["error", "always", { "null": "ignore" }],
+    "eslint/no-empty": "error",
+    "eslint/no-array-constructor": "error",
+    "eslint/no-caller": "error",
+    "eslint/no-debugger": "error",
+    "eslint/no-eval": "error",
+    "eslint/no-extend-native": "error",
+    "eslint/no-implied-eval": "error",
+    "eslint/no-iterator": "error",
+    "eslint/no-new-wrappers": "error",
+    "eslint/no-object-constructor": "error",
+    "eslint/no-proto": "error",
+    "eslint/no-var": "error",
+    "import/no-amd": "error",
+    "import/no-cycle": "error",
+    "import/no-self-import": "error",
+    "import/no-webpack-loader-syntax": "error",
+    "jsx_a11y/alt-text": "error",
+    "jsx_a11y/anchor-ambiguous-text": "error",
+    "jsx_a11y/anchor-has-content": "error",
+    "jsx_a11y/aria-props": "error",
+    "jsx_a11y/aria-role": "error",
+    "jsx_a11y/aria-unsupported-elements": "error",
+    "jsx_a11y/heading-has-content": "error",
+    "jsx_a11y/html-has-lang": "error",
+    "jsx_a11y/iframe-has-title": "error",
+    "jsx_a11y/no-access-key": "error",
+    "jsx_a11y/no-distracting-elements": "error",
+    "jsx_a11y/role-has-required-aria-props": "error",
+    "jsx_a11y/scope": "error",
+    "jsx_a11y/tabindex-no-positive": "error",
+    "node/handle-callback-err": "error",
+    "node/no-new-require": "error",
+    "node/no-path-concat": "error",
+    "oxc/bad-bitwise-operator": "error",
+    "oxc/double-comparisons": "error",
+    "oxc/erasing-op": "error",
+    "oxc/missing-throw": "error",
+    "oxc/no-accumulating-spread": "error",
+    "oxc/no-barrel-file": "error",
+    "oxc/no-const-enum": "error",
+    "oxc/only-used-in-recursion": "error",
+    "oxc/uninvoked-array-callback": "error",
+    "promise/no-new-statics": "error",
+    "promise/spec-only": "error",
+    "promise/valid-params": "error",
+    "react/no-children-prop": "error",
+    "react/no-direct-mutation-state": "error",
+    "react/no-unknown-property": "error",
+    "react/style-prop-object": "error",
+    "react/void-dom-elements-no-children": "error",
+    "typescript/no-array-delete": "error",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/no-for-in-array": "error",
+    "typescript/no-implied-eval": "error",
+    "typescript/no-misused-new": "error",
+    "typescript/no-namespace": "error",
+    "typescript/no-require-imports": "error",
+    "typescript/no-unsafe-declaration-merging": "error",
+    "typescript/no-var-requires": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/prefer-promise-reject-errors": "error",
+    "unicorn/no-invalid-fetch-options": "error",
+    "unicorn/no-invalid-remove-event-listener": "error",
+    "unicorn/no-length-as-slice-end": "error",
+    "unicorn/no-single-promise-in-promise-methods": "error",
+    "unicorn/no-thenable": "error",
+    "unicorn/prefer-modern-math-apis": "error",
+    "unicorn/prefer-set-size": "error",
+    "unicorn/require-array-join-separator": "error",
+
+    // --- warn: deuda medida el 2026-09-08 (4408 avisos en 122 reglas).
+    // El numero al lado es el conteo del dia que entro. Cuando llega a cero,
+    // la regla sube a "error"; `bun run lint:ox` impide que suba. ---
+    // 648 → 652 el 2026-09-09. Los cuatro nuevos están en los barridos que leen
+    // el texto de `convex/` buscando handlers sin guarda. Un barrido es
+    // condicional por definición; la regla apunta a asertos condicionales, que
+    // es otra cosa.
+    "vitest/no-conditional-in-test": "warn", // 616
+    "typescript/no-unsafe-type-assertion": "warn", // 285
+    "typescript/prefer-nullish-coalescing": "warn", // 272
+    "typescript/strict-void-return": "warn", // 221
+    "typescript/no-unnecessary-template-expression": "warn", // 251
+    // 236 → 237 el 2026-09-09. Viene de hacer fieles los dobles de
+    // `ctx.storage`: el real devuelve una promesa y el mock devolvía `undefined`,
+    // que mataba a `Effect.tryPromise`.
+    "unicorn/no-useless-undefined": "warn", // 236
+    "typescript/no-unnecessary-type-assertion": "warn", // 171
+    "unicorn/prefer-string-replace-all": "warn", // 181
+    "unicorn/no-array-sort": "warn", // 165
+    "typescript/return-await": "warn", // 45
+    "typescript/no-unsafe-member-access": "warn", // 143
+    "typescript/no-unsafe-assignment": "warn", // 104
+    "typescript/no-unsafe-call": "warn", // 80
+    "vitest/no-conditional-expect": "warn", // 52
+    // APAGADA el 2026-09-09, y con fecha de reencendido.
+    //
+    // La regla decide por el NOMBRE del método, así que `Option.some(x)` de
+    // `effect/Option` le parece `array.some(fn)`. Reproducido en aislamiento
+    // con oxlint 1.82.0, que es la última publicada:
+    //
+    //   import * as Option from 'effect/Option'
+    //   const f = (b: Uint8Array) => Option.some(new TextDecoder().decode(b))
+    //   → unicorn(no-array-callback-reference)
+    //
+    // Ya está reportado río arriba (oxc-project/oxc#18876) y arreglado a
+    // medias: 1.79.0 dice ignorar los imports de effect y este caso sigue
+    // pasando. Con Effect entrando a los 553 archivos del proyecto, el conteo
+    // solo mide falsos positivos.
+    //
+    // Lo que se pierde: la regla es la única que caza `['1','2'].map(parseInt)`,
+    // que TypeScript no ve porque las firmas encajan. Volver a prenderla en
+    // cuanto una versión de oxlint arregle el caso de arriba; el repro está
+    // acá mismo para comprobarlo en un minuto.
+    "unicorn/no-array-callback-reference": "off", // era warn con pin 60
+    "vitest/require-to-throw-message": "warn", // 56
+    "unicorn/explicit-length-check": "warn", // 51
+    "jsx_a11y/prefer-tag-over-role": "warn", // 57
+    "unicorn/prefer-single-call": "warn", // 45
+    // 42 → 59 el 2026-09-09. En un programa Effect, `return yield* Effect.fail(x)`
+    // no es estilo: el `return` es lo que le dice a TypeScript que ahí termina la
+    // función. Se intentó quitarlo de los 21 programas sin valor de retorno y
+    // nueve archivos dejaron de compilar por narrowing perdido. El pin sube
+    // porque el código correcto es el que la regla marca.
+    // 59 → 68 el 2026-09-09, segunda vez en la misma noche y por la misma razón:
+    // la ola de componentes trajo más programas Effect. El `return` de
+    // `return yield* Effect.fail(x)` es lo que le dice a TypeScript que ahí
+    // termina la función; quitarlo rompió nueve archivos cuando lo intenté.
+    // 68 → 69 el 2026-09-09: un sitio más, el fiber interrumpible que
+    // `CsvViewer.tsx` monta para decodificar los bytes del documento. Misma
+    // causa, mismo motivo para no bajarlo.
+    // 69 → 70 el 2026-09-09 ([F] «ajustar el lint y el gate a que ahora hay
+    // effect»): el único sitio nuevo es `resizable.tsx` — `clearGroupAriaOrientation`
+    // hace `if (element === null) { return yield* Effect.fail(...) }` dentro de
+    // un `Effect.fn`. Verificado con el compilador: sin el `return`, TypeScript
+    // no puede narrowear `element` a no-null en la línea que sigue (el `if` sin
+    // `return`/`throw`/`never` no cierra la rama), así que `element.removeAttribute`
+    // volvería a quedar sobre `HTMLElement | null`. La regla no tiene opción para
+    // tolerar `return yield*` (`node_modules/oxlint/configuration_schema.json` solo
+    // expone `treatUndefinedAsUnspecified`, que es sobre `return undefined` explícito,
+    // no sobre esto) y no hay override por patrón de archivo posible: con Effect al
+    // 100% del árbol, "los archivos con Effect.fn/Effect.gen" son casi todo el árbol,
+    // así que apagar la regla ahí perdería los hallazgos reales que sigue cazando
+    // (ver `provider-boundary.ts:104`, un switch sin `default` que la misma regla
+    // marca y que es un bug real, no Effect). Sigue en "warn" con pin, como los tres
+    // bumps anteriores.
+    // 70 → 74 el 2026-09-10, misma razón que los cuatro bumps anteriores: las olas
+    // 2 y 3 de calidad dejaron ~30 programas Effect nuevos con `return yield*` y
+    // quitaron unos pocos; el neto es +4 y ningún sitio nuevo es un switch sin default.
+    "typescript/consistent-return": "warn", // 74
+    "eslint/no-promise-executor-return": "warn", // 37
+    "eslint/no-shadow": "warn", // 35
+    // 41 → 43 el 2026-09-09. Dos regex escapadas en los tests que auditan
+    // texto de `convex/`.
+    "unicorn/prefer-string-raw": "warn", // 43
+    "typescript/no-deprecated": "warn", // 37
+    "typescript/no-unsafe-argument": "warn", // 34
+    "typescript/no-base-to-string": "warn", // 32
+    "vitest/expect-expect": "warn", // 33
+    "react/no-array-index-key": "warn", // 15
+    "unicorn/prefer-add-event-listener": "warn", // 28
+    "vitest/valid-expect": "warn", // 34
+    "unicorn/escape-case": "warn", // 24
+    "unicorn/prefer-at": "warn", // 22
+    "unicorn/prefer-code-point": "warn", // 23
+    "typescript/no-misused-spread": "warn", // 22
+    "oxc/no-map-spread": "warn", // 24
+    "typescript/no-unnecessary-type-conversion": "warn", // 21
+    "typescript/no-unnecessary-boolean-literal-compare": "warn", // 20
+    // 2026-09-09 ([F] «ajustar el lint y el gate a que ahora hay effect»): 20 → 26,
+    // seis sitios nuevos, los seis en guardas de validación (`Effect.sync` +
+    // `Schema.is`) que revientan un array de datos semilla/config contra su propio
+    // tipo de literales — `dev-auth/types.ts`, `dev-auth/demo-data.ts`,
+    // `navigation/registry.ts`. Verificado con el compilador (TS, no la regla): en
+    // la rama `if (!isX(valor))` de esas guardas, `valor` narrowea a `never` —
+    // `valor` ya declara el tipo exacto que `isX` prueba, así que TypeScript da por
+    // inalcanzable la rama negativa. La regla, con `allowNever` en `false` por
+    // default, trata ese `never` como no seguro para interpolar. Es el mismo patrón
+    // en los tres archivos y va a seguir apareciendo con cada guarda de Effect
+    // nueva: se prende `allowNever` (`RestrictTemplateExpressionsConfig` en
+    // `node_modules/oxlint/configuration_schema.json` la expone). El mismo `allowNever`
+    // también limpia sitios `never` que ya estaban en la deuda vieja (no solo los
+    // seis nuevos). `convex/_helpers/errors.ts:163` (el otro caso documentado, un
+    // `{ toString(): string }` que la regla no reconoce como seguro) se arregló en
+    // el sitio: `${resourceId}` → `${resourceId.toString()}`. Conteo real después de
+    // los dos cambios: 16 — por debajo del pin de antes de este bloque.
+    "typescript/restrict-template-expressions": ["warn", { "allowNever": true }], // 16
+    "unicorn/prefer-import-meta-properties": "warn", // 20
+    // 19 → 20 el 2026-09-10. La ola 2 de api reescribió los tres GET de admin/activity
+    // con `Number.parseInt(limit, 10)`; cambiarlo a `Math.trunc(Number(x))` haría que
+    // "12abc" pase de 12 a NaN, y eso es comportamiento, no escritura. Queda pineado.
+    "unicorn/prefer-number-coercion": "warn", // 20
+    "unicorn/require-post-message-target-origin": "warn", // 20
+    "typescript/no-unsafe-return": "warn", // 16
+    "typescript/no-unnecessary-type-parameters": "warn", // 13
+    "eslint/no-control-regex": "warn", // 14
+    "promise/always-return": "warn", // 4
+    "typescript/require-array-sort-compare": "warn", // 14
+    "react/jsx-no-useless-fragment": "warn", // 10
+    "react/set-state-in-effect": "warn", // 8
+    "unicorn/prefer-string-slice": "warn", // 8
+    "react/exhaustive-effect-dependencies": "warn", // 11
+    "import/no-unassigned-import": "warn", // 9
+    "typescript/switch-exhaustiveness-check": "warn", // 8
+    "unicorn/no-useless-promise-resolve-reject": "warn", // 9
+    "jsx_a11y/no-noninteractive-tabindex": "warn", // 8
+    "unicorn/new-for-builtins": "warn", // 4
+    "unicorn/no-array-reverse": "warn", // 7
+    "unicorn/no-hex-escape": "warn", // 7
+    "unicorn/no-lonely-if": "warn", // 7
+    "eslint/no-lonely-if": "warn", // 6
+    "typescript/prefer-includes": "warn", // 6
+    "unicorn/no-new-array": "warn", // 6
+    "import/no-named-as-default": "warn", // 4
+    "typescript/unbound-method": "warn", // 1
+    "unicorn/no-object-as-default-parameter": "warn", // 5
+    "unicorn/no-useless-fallback-in-spread": "warn", // 5
+    "unicorn/prefer-query-selector": "warn", // 7
+    "unicorn/prefer-set-has": "warn", // 5
+    "unicorn/prefer-string-starts-ends-with": "warn", // 5
+    "unicorn/prefer-type-error": "warn", // 5
+    // 4 → 7 el 2026-09-09. Los tres nuevos son `useCallback` convertidos en
+    // RoomShell, DocumentViewerDialog y AdminVdrRequestsClient. Verifiqué que
+    // las cuatro dependencias declaradas SÍ se usan en cada cuerpo; el
+    // compilador de React las llama de más porque puede probar que son
+    // estables. Quitar una dependencia que el cuerpo usa, fiándose de eso, es
+    // como se introduce un closure viejo, así que el pin sube en vez.
+    "react/memo-dependencies": "warn", // 7
+    "react/no-object-type-as-default-prop": "warn", // 5
+    "react/no-unstable-nested-components": "warn", // 4
+    "react/purity": "error",
+    "typescript/no-redundant-type-constituents": "warn", // 4
+    "unicorn/prefer-blob-reading-methods": "warn", // 4
+    "unicorn/prefer-dom-node-dataset": "warn", // 4
+    "eslint/no-useless-escape": "warn", // 3
+    "eslint/radix": "error",
+    "jsx_a11y/no-autofocus": "warn", // 3
+    "react/hooks": "warn", // 1
+    "react/jsx-no-constructed-context-values": "warn", // 3
+    "unicorn/no-immediate-mutation": "warn", // 3
+    "unicorn/no-unreadable-array-destructuring": "warn", // 3
+    "unicorn/no-useless-switch-case": "warn", // 3
+    "unicorn/prefer-dom-node-append": "warn", // 2
+    "eslint/no-else-return": "warn", // 1
+    "eslint/no-unsafe-optional-chaining": "warn", // 2
+    "eslint/no-unused-vars": "error",
+    "eslint/no-useless-concat": "warn", // 2
+    "jsx_a11y/no-aria-hidden-on-focusable": "warn", // 2
+    "jsx_a11y/no-redundant-roles": "error",
+    "jsx_a11y/no-static-element-interactions": "warn", // 2
+    "oxc/branches-sharing-code": "warn", // 2
+    "react/no-deriving-state-in-effects": "warn", // 2
+    "unicorn/no-useless-length-check": "warn", // 2
+    "unicorn/prefer-top-level-await": "error",
+    "eslint/no-case-declarations": "warn", // 1
+    "eslint/no-irregular-whitespace": "warn", // 1
+    "eslint/no-loop-func": "warn", // 1
+    "eslint/no-new": "warn", // 1
+    "eslint/no-self-compare": "error",
+    "eslint/no-unmodified-loop-condition": "warn", // 1
+    "eslint/no-unneeded-ternary": "warn", // 1
+    "jsx_a11y/interactive-supports-focus": "warn", // 1
+    "jsx_a11y/no-noninteractive-element-interactions": "warn", // 1
+    "promise/no-callback-in-promise": "error",
+    "react/iframe-missing-sandbox": "warn", // 1
+    "react/jsx-no-target-blank": "warn", // 1
+    "react/preserve-manual-memoization": "error",
+    "react/refs": "error",
+    "typescript/await-thenable": "error",
+    "typescript/no-duplicate-type-constituents": "warn", // 1
+    "typescript/no-extraneous-class": "warn", // 1
+    "typescript/no-unsafe-unary-minus": "warn", // 1
+    "typescript/no-useless-default-assignment": "warn", // 1
+    "typescript/no-useless-empty-export": "warn", // 1
+    "typescript/only-throw-error": "warn", // 1
+    "unicorn/no-useless-spread": "warn", // 1
+    "unicorn/prefer-array-find": "warn", // 1
+    "unicorn/prefer-dom-node-remove": "error",
+    "unicorn/require-module-specifiers": "warn", // 1
+    "vitest/hoisted-apis-on-top": "warn", // 1
+    "vitest/no-commented-out-tests": "warn" // 1
+  },
+
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/.next.quarantine-*/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/out/**",
+    "sherlock/app/convex/_generated/**",
+    "sherlock/app/public/**",
+    "sherlock/app/next-env.d.ts",
+    "sherlock/app/playwright-report/**",
+    "sherlock/app/test-results/**",
+    "sherlock/app/BORRAR_*/**",
+    "**/.claude/**",
+    "**/.husky/**",
+    "docs/**",
+    "output/**",
+    "tmp/**",
+    "test-artifacts/**",
+    "reports/**",
+    "pivot-Sherlock/**",
+    "llm-wiki/bundle/**"
+  ],
+
+  "overrides": [
+    {
+      // Tests, e2e, scripts y config: la consola es la salida, el `any` de un
+      // mock no es el `any` de produccion, y un doble de IndexedDB o de
+      // FileReader imita al navegador tal cual — incluido su error nulo.
+      "files": [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/e2e/**",
+        "**/scripts/**",
+        "**/*.config.ts",
+        "**/*.config.mjs",
+        "llm-wiki/**"
+      ],
+      "rules": {
+        "eslint/no-console": "off",
+        "typescript/no-explicit-any": "off",
+        // Los .mjs de operador y los dobles de test no tienen cobertura de
+        // tipos: la familia no-unsafe-* ahi es ruido, no deuda.
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-implied-eval": "off",
+        "typescript/prefer-promise-reject-errors": "off",
+        "oxc/no-barrel-file": "off",
+        "unicorn/no-process-exit": "off"
+      }
+    },
+    {
+      // `node:test` es dueño de la promesa que devuelve cada `test(...)` de nivel
+      // superior: el runner la espera. Marcar 25 llamadas con `void` seria ruido,
+      // y cada test nuevo tendria que repetirlo.
+      "files": ["**/*.test.mjs"],
+      "rules": {
+        "typescript/no-floating-promises": "off"
+      }
+    }
+  ]
+}

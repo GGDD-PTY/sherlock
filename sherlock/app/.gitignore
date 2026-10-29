@@ -1,0 +1,16 @@
+node_modules
+.env
+.env.*
+!.env.example
+!.env.template
+.next/
+.next.quarantine-*/
+.convex/
+.convex-local/
+/public/mog/
+/public/pdfjs/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+*.tsbuildinfo

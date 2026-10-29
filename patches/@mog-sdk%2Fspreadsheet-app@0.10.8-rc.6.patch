@@ -1,0 +1,98 @@
+diff --git a/dist/index.js b/dist/index.js
+index e1108d0122aa626edc0a73a5c883625d99aba47c..7567aa6717f9673e60ca4be665c7f43a3321e4aa 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -326066,16 +326066,82 @@ function normalizeFontColor(value3) {
+ function isAutomaticDefaultFontColor(fontColor) {
+   return !!fontColor && normalizeFontColor(fontColor) === normalizeFontColor(DEFAULT_CELL_STYLE.fontColor);
+ }
+-function resolveCellTextColor(format, defaultFontColor) {
++function solidColorLuminance(color) {
++  if (!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color.trim()))
++    return null;
++  const hex = normalizeFontColor(color);
++  if (!/^#[0-9a-f]{6}$/.test(hex))
++    return null;
++  const channels = [1, 3, 5].map((offset) => {
++    const value = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
++    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
++  });
++  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
++}
++function solidFillLuminance(format) {
++  if (!format?.backgroundColor || format.gradientFill || format.patternType && format.patternType !== "solid" && format.patternType !== "none")
++    return null;
++  return solidColorLuminance(format.backgroundColor);
++}
++function automaticTextOnFill(format, color) {
++  const background = solidFillLuminance(format);
++  const foreground = solidColorLuminance(color);
++  if (background === null || foreground === null)
++    return color;
++  const contrast = (Math.max(background, foreground) + 0.05) / (Math.min(background, foreground) + 0.05);
++  if (contrast >= 4.5)
++    return color;
++  return (background + 0.05) / 0.05 >= 1.05 / (background + 0.05) ? "#000000" : "#ffffff";
++}
++function textOnSkin(color, backgroundColor) {
++  if (!backgroundColor)
++    return color;
++  const background = solidColorLuminance(backgroundColor);
++  const foreground = solidColorLuminance(color);
++  if (background === null || foreground === null)
++    return color;
++  const contrast = (value) => (Math.max(background, value) + 0.05) / (Math.min(background, value) + 0.05);
++  if (contrast(foreground) >= 4.5)
++    return color;
++  const target = contrast(1) >= contrast(0) ? 255 : 0;
++  const hex = normalizeFontColor(color);
++  const channels = [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16));
++  let low = 0;
++  let high = 1;
++  let result = target === 255 ? "#ffffff" : "#000000";
++  for (let step = 0;step < 10; step++) {
++    const amount = (low + high) / 2;
++    const candidate = "#" + channels.map((channel) => Math.round(channel + (target - channel) * amount).toString(16).padStart(2, "0")).join("");
++    const luminance = solidColorLuminance(candidate);
++    if (luminance !== null && contrast(luminance) >= 4.5) {
++      result = candidate;
++      high = amount;
++    } else
++      low = amount;
++  }
++  return result;
++}
++function resolveCellTextColor(format, defaultFontColor, defaultBackgroundColor) {
+   const fontColor = format?.fontColor;
+   if (!fontColor) {
+-    return defaultFontColor ?? DEFAULT_CELL_STYLE.fontColor;
++    return automaticTextOnFill(format, defaultFontColor ?? DEFAULT_CELL_STYLE.fontColor);
+   }
++  if (solidFillLuminance(format) !== null)
++    return fontColor;
+   if (defaultFontColor && isAutomaticDefaultFontColor(fontColor)) {
+     return defaultFontColor;
+   }
+-  return fontColor;
++  if (format?.backgroundColor || format?.gradientFill || format?.patternType && format.patternType !== "none")
++    return fontColor;
++  return textOnSkin(fontColor, defaultBackgroundColor);
+ }
++function resolveCellPaintFormat(format, defaultFontColor, defaultBackgroundColor, hasColorOverride = false) {
++  if (!format?.fontColor || hasColorOverride)
++    return format;
++  const color = resolveCellTextColor(format, defaultFontColor, defaultBackgroundColor);
++  return color === format.fontColor ? format : { ...format, fontColor: color };
++}
++
+ function computeTextAlign(align, value3) {
+   if (!align || align === "general") {
+     if (typeof value3 === "number") return "right";
+@@ -329807,6 +329873,7 @@ var init_cells3 = __esm({
+       renderCellText(ctx, cellInfo, format, value3, displayText, richTextSegments, hasHyperlink, fontColorOverride, meta, _frame, reader) {
+         const theme = this.sheetData.theme;
+         const defaultFontColor = this.sheetData.sheetViewSkin.defaultCellText;
++        format = resolveCellPaintFormat(format, defaultFontColor, this.sheetData.sheetViewSkin.defaultCellBackground, Boolean(fontColorOverride || reader.getBgColorOverride()));
+         const textMeasurer = this.textMeasurer;
+         const { x, y, width, height, row, col } = cellInfo;
+         const hasHardLineBreaks = /[\r\n]/.test(displayText);

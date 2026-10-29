@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en,es",
+  "import": ["@cspell/dict-es-es/cspell-ext.json"],
+  "words": [
+    "Sherlock",
+    "Convex",
+    "Clerk",
+    "signup",
+    "signin",
+    "popover",
+    "middleware",
+    "navbar",
+    "dashboards",
+    "webhook",
+    "webhooks",
+    "parsear",
+    "parsearlos"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "dist/**",
+    "coverage/**",
+    "*.lock",
+    "package-lock.json"
+  ],
+  "enableFiletypes": ["typescript", "typescriptreact", "javascript", "javascriptreact"]
+}

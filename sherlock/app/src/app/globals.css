@@ -1,0 +1,826 @@
+/* ============================================================================
+   Sherlock UNIFIED - GLOBAL STYLES
+   ============================================================================
+   Sistema visual Sherlock: preparacion sell-side para America Latina.
+
+   PALETA: 6 PIGMENTOS (Sistema de Marca v1.0, 2026-08-28)
+   - Borgona #5a2331     marca; acento en light, superficie en dark
+   - Borgona Deep #250e14 lienzo del dark mode
+   - Ocre #c0873a        highlight; jamas texto sobre crema
+   - Crema #f6f3ec       lienzo del light mode / texto en dark
+   - Navy #0e1a2b        texto en light / foco / bordes con alpha
+   - Gris #6a7689        bordes, iconos, ejes, metadata
+   Regla: un solo hex por color. Los tonos intermedios son OPACIDAD de estos
+   seis, nunca un hex nuevo. Sin gradientes decorativos.
+
+   TIPOGRAFIA:
+   - Display (--font-display): serif editorial para títulos
+   - Sans (--font-sans): texto general y navegacion
+   - Mono (--font-mono): IDs y datos técnicos
+   ============================================================================ */
+
+@import 'tailwindcss';
+@source not '../../.next.quarantine-*';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+   THEME CONFIGURATION
+   ============================================================================ */
+@theme inline {
+  /* ===== COLORES SEMÁNTICOS ===== */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-meta-foreground: var(--meta-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-hairline: var(--border-hairline);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* ===== COLORES DE CHARTS ===== */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* ===== COLORES DE SIDEBAR ===== */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ===== TIPOGRAFÍA ===== */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+/* ============================================================================
+   LIGHT THEME - Sherlock CREMA
+   ============================================================================
+   Crema de fondo, borgona como accion, navy como texto, ocre al 4%.
+   Proporcion: 70% fondo · 18% texto · 8% borgona · 4% ocre.
+   ============================================================================ */
+:root {
+  /* ===== CONFIGURACIÓN BASE ===== */
+  --radius: 0.625rem;
+  color-scheme: light;
+
+  /* Sans vive en :root para que sobreviva cuando las fuentes locales
+     (que solo definen --font-display y --font-mono) están activas. */
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* ===== PALETA Sherlock — 6 PIGMENTOS =====================================
+     Sistema de Marca v1.0 (2026-08-28, decisión [F]). La regla que define el
+     sistema: UN SOLO HEX POR COLOR. Todo tono intermedio — bordes, texto
+     secundario, superficies rellenas, hover — es una OPACIDAD de estos seis,
+     nunca un hex nuevo. Esto es lo que evita volver a tener cuatro dorados
+     casi iguales.
+
+     Retirados: #f1efe8 (perla), #ffffff como color de marca, #a06f2d,
+     #c9674f, #e1d4d6, #20201c, #5f5256, #8f7a7b y los alias wine/plum/blush/
+     champagne/mauve/terracotta/winenight/inkwine. Eran opacidades disfrazadas
+     de colores o nombres distintos para el mismo pigmento.
+
+     Los mixes usan `in srgb` a propósito: son los valores publicados en
+     BRAND.md y en el kit de marca, y oklab da otros números. */
+  --brand-burgundy: #5a2331;
+  --brand-burgundy-deep: #250e14;
+  --brand-ochre: #c0873a;
+  --brand-cream: #f6f3ec;
+  --brand-navy: #0e1a2b;
+  --brand-grey: #6a7689;
+
+  /* Estados: BRAND.md no define rojo de error ni ámbar de aviso, y la marca no
+     puede pintar un error con el mismo borgoña de las acciones. `danger` es el
+     único hex fuera de los seis pigmentos y existe solo para destructive;
+     `warning` sí se deriva del ocre oscurecido hacia navy (el ocre puro mide
+     2.80:1 sobre crema y no puede ser texto). */
+  --status-danger: #8f4d3f;
+  --status-warning: color-mix(in srgb, var(--brand-ochre) 70%, var(--brand-navy));
+
+  /* Papel blanco para visores de documentos. No es color de marca: simula la
+     hoja impresa detrás de un PDF/DOCX y por eso no entra en la regla de los
+     seis pigmentos. */
+  --paper: #ffffff;
+
+  /* ===== SUPERFICIES ===== */
+  --background: var(--brand-cream);
+  --foreground: var(--brand-navy);
+
+  /* La card comparte el lienzo y se separa por borde + aire, no por otro tono:
+     regla "Card / superficie = crema + borde" del sistema de marca. */
+  --card: var(--brand-cream);
+  --card-foreground: var(--brand-navy);
+
+  /* Popovers y dropdowns flotan con borde fuerte y shadow-md, no con un cuarto
+     tono de fondo. */
+  --popover: var(--brand-cream);
+  --popover-foreground: var(--brand-navy);
+
+  /* ===== PRIMARIO: BORGOÑA ===== */
+  --primary: var(--brand-burgundy);
+  --primary-foreground: var(--brand-cream);
+
+  /* ===== SECUNDARIO (chips, pills rellenos) ===== */
+  --secondary: color-mix(in srgb, var(--brand-burgundy) 6%, var(--brand-cream));
+  --secondary-foreground: var(--brand-navy);
+
+  /* ===== MUTED ===== */
+  --muted: color-mix(in srgb, var(--brand-burgundy) 6%, var(--brand-cream));
+  --muted-foreground: color-mix(in srgb, var(--brand-navy) 70%, var(--brand-cream));
+
+  /* Metadata, iconos y ejes de gráfica. El gris mide 4.15:1 sobre crema: pasa
+     3:1 para elementos no textuales y texto grande, NO llega a AA para cuerpo.
+     Texto secundario de párrafo usa --muted-foreground (6.19:1), nunca este. */
+  --meta-foreground: var(--brand-grey);
+
+  /* ===== ACCENT ===== */
+  --accent: var(--brand-burgundy);
+  --accent-foreground: var(--brand-cream);
+
+  /* Highlight: el ocre vive en fondos, reglas, iconos y cifras display; jamás
+     como texto sobre crema. */
+  --highlight: var(--brand-ochre);
+  --highlight-foreground: var(--brand-navy);
+
+  /* ===== DESTRUCTIVE ===== */
+  --destructive: var(--status-danger);
+  --destructive-foreground: var(--brand-cream);
+
+  /* ===== BORDES E INPUTS ===== */
+  /* Dos niveles, como los define el sistema de marca y como pidió el panel:
+     el hairline de tabla/divisor es navy 12%; el borde de una card es 15%,
+     porque en claro card y lienzo son el mismo hex y ese borde es la ÚNICA
+     estructura que separa una superficie de otra. */
+  --border-hairline: color-mix(in srgb, var(--brand-navy) 12%, var(--brand-cream));
+  --border: color-mix(in srgb, var(--brand-navy) 15%, var(--brand-cream));
+  --input: color-mix(in srgb, var(--brand-navy) 25%, var(--brand-cream));
+  /* Foco en navy sólido (15.77:1). El ocre no llega ni a 3:1 sobre crema. */
+  --ring: var(--brand-navy);
+
+  /* ===== CHARTS ===== */
+  /* Las series se consumen como relleno de barra, punto de leyenda Y texto
+     (`text-chart-*` en AdminDashboardClient), así que cada una cumple 4.5:1
+     sobre crema, no solo el 3:1 de objeto gráfico. El ocre puro medía 2.80:1
+     como punto de leyenda — la prohibición #1 aplicada a una gráfica. */
+  --chart-1: var(--brand-burgundy);
+  --chart-2: color-mix(in srgb, var(--brand-ochre) 65%, var(--brand-navy));
+  --chart-3: var(--brand-navy);
+  --chart-4: color-mix(in srgb, var(--brand-grey) 82%, var(--brand-navy));
+  --chart-5: color-mix(in srgb, var(--brand-burgundy) 70%, var(--brand-navy));
+
+  /* ===== SIDEBAR ===== */
+  --sidebar: var(--brand-cream);
+  --sidebar-foreground: var(--brand-navy);
+  --sidebar-primary: var(--brand-burgundy);
+  --sidebar-primary-foreground: var(--brand-cream);
+  --sidebar-accent: color-mix(in srgb, var(--brand-burgundy) 6%, var(--brand-cream));
+  --sidebar-accent-foreground: var(--brand-navy);
+  --sidebar-border: color-mix(in srgb, var(--brand-navy) 15%, var(--brand-cream));
+  --sidebar-ring: var(--brand-navy);
+
+  /* ===== SEMÁNTICOS ADICIONALES ===== */
+  --success: var(--brand-burgundy);
+  --success-foreground: var(--brand-cream);
+  --warning: var(--status-warning);
+  --warning-foreground: var(--brand-cream);
+  --info: color-mix(in srgb, var(--brand-navy) 70%, var(--brand-cream));
+  --info-foreground: var(--brand-cream);
+  --disabled-foreground: var(--brand-grey);
+
+  /* ===== INLINE COLOR FALLBACKS ===== */
+  --badge-bg: var(--brand-ochre);
+  --badge-fg: var(--brand-burgundy);
+
+  /* Pulse animation color */
+  --pulse-color: var(--brand-ochre);
+
+  /* Partes del isotipo bicolor (public/brand/sherlock-mark-duo.svg) */
+  --sherlock-lens: var(--brand-burgundy);
+  --sherlock-initial: var(--brand-ochre);
+}
+
+.font-fallback-vars {
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* ============================================================================
+   DARK THEME - Sherlock BORGONA
+   ============================================================================
+   Borgona Deep de lienzo, borgona de superficie, ocre de acento, crema de texto.
+   ============================================================================ */
+.dark {
+  color-scheme: dark;
+
+  /* ===== INVERSIÓN LIGHT ↔ DARK ============================================
+     Crema y Borgoña Deep intercambian el trabajo de fondo. Navy y Borgoña
+     intercambian el trabajo de acento. Ocre y gris son las dos anclas que no
+     cambian: son lo que hace reconocible la marca en ambos modos.
+
+     El navy se jubila como texto en oscuro (1.04:1 sobre borgoña deep). Su
+     único trabajo aquí es ser la etiqueta de los botones ocre. */
+
+  /* ===== SUPERFICIES OSCURAS ===== */
+  --background: var(--brand-burgundy-deep);
+  --foreground: var(--brand-cream);
+
+  /* Elevación única: cards, secciones y paneles comparten el borgoña del logo.
+     Contra el lienzo separan 1.49:1 — la separación real la hace el borde. */
+  --card: var(--brand-burgundy);
+  --card-foreground: var(--brand-cream);
+
+  --popover: color-mix(in srgb, var(--brand-cream) 8%, var(--brand-burgundy));
+  --popover-foreground: var(--brand-cream);
+
+  /* Ocre legible como TEXTO sobre una card borgoña. El ocre puro mide 3.93:1
+     ahí — axe lo cazó el 2026-08-28 — porque el 5.88:1 del sistema de marca es
+     contra el LIENZO, no contra la card. Subido 15% hacia crema llega a 4.66:1
+     sobre la card y 6.96:1 sobre el lienzo, y sigue leyéndose como el mismo
+     ocre. El ocre puro se queda donde 3:1 basta: relleno, reglas, iconos,
+     cifras display, foco, series de gráfica y la S del isotipo. */
+  --ochre-text: color-mix(in srgb, var(--brand-ochre) 85%, var(--brand-cream));
+
+  /* ===== PRIMARY: OCRE SOBRE OSCURO ===== */
+  --primary: var(--ochre-text);
+  --primary-foreground: var(--brand-navy);
+
+  /* ===== SECUNDARIO (chips, pills) — mismo borgoña que las cards ===== */
+  --secondary: var(--brand-burgundy);
+  --secondary-foreground: var(--brand-cream);
+
+  /* ===== MUTED ===== */
+  --muted: var(--brand-burgundy);
+  --muted-foreground: color-mix(in srgb, var(--brand-cream) 70%, var(--brand-burgundy-deep));
+
+  /* El gris solo funciona sobre el lienzo (3.96:1). Sobre una card borgoña mide
+     2.66:1, así que ahí el texto secundario es crema al 70%, nunca gris. */
+  --meta-foreground: var(--brand-grey);
+
+  /* ===== ACCENT: OCRE ===== */
+  --accent: var(--ochre-text);
+  --accent-foreground: var(--brand-navy);
+  /* Highlight es geometría, nunca texto pequeño: se queda en ocre puro. */
+  --highlight: var(--brand-ochre);
+  --highlight-foreground: var(--brand-navy);
+
+  /* ===== DESTRUCTIVE ===== */
+  /* Las variantes destructive de shadcn pintan `dark:bg-destructive/60`, así que
+     este token NUNCA se ve sólido: el label aterriza sobre el composite al 60%.
+     A 45% el composite medía 3.72:1 sobre el lienzo. A 28% cumple 4.5:1 sobre
+     las cuatro superficies oscuras (lienzo 4.66, sidebar 5.11, card 5.43,
+     popover 5.90). Hallazgo del panel adversarial, 2026-08-28. */
+  --destructive: color-mix(in srgb, var(--status-danger) 28%, var(--brand-cream));
+  --destructive-foreground: var(--brand-burgundy-deep);
+
+  /* ===== BORDES =====
+     Desviación deliberada del sistema de marca, que pide crema al 15%: en
+     oscuro el borde ES la estructura, porque lienzo y card solo se separan
+     1.49:1. Crema al 15% mide 1.51:1 sobre la card y la sala se lee sin marco.
+     Al 42% mide 3.20:1 y cumple el 3:1 que exige el sistema de diseño para
+     bordes, iconos y foco (invariante ya vigente desde 2026-07-28). */
+  --border-hairline: color-mix(in srgb, var(--brand-cream) 15%, transparent);
+  --border: color-mix(in srgb, var(--brand-cream) 42%, transparent);
+  --input: color-mix(in srgb, var(--brand-cream) 42%, transparent);
+  --ring: var(--brand-ochre);
+
+  /* ===== CHARTS EN OSCURO ===== */
+  /* Mismo criterio que en claro, contra la card borgoña. El ocre puro medía
+     3.94:1 y el gris puro 2.66:1 — las prohibiciones #4 y #2 aplicadas a una
+     gráfica que siempre se dibuja dentro de una Card. */
+  --chart-1: var(--ochre-text);
+  --chart-2: var(--brand-cream);
+  --chart-3: color-mix(in srgb, var(--brand-cream) 62%, var(--brand-burgundy));
+  --chart-4: color-mix(in srgb, var(--brand-grey) 50%, var(--brand-cream));
+  --chart-5: color-mix(in srgb, var(--brand-ochre) 45%, var(--brand-cream));
+
+  /* ===== SIDEBAR OSCURO — superficie borgoña sobre el lienzo deep =====
+     Portada, árbol de carpetas y nav de secciones son el borgoña de marca:
+     el 55 % anterior quedaba a un paso del lienzo y la sala se veía de un
+     solo color ([F] 2026-09-11). El hover es crema al 8 % sobre la superficie. */
+  --sidebar: var(--brand-burgundy);
+  --sidebar-foreground: var(--brand-cream);
+  --sidebar-primary: var(--ochre-text);
+  --sidebar-primary-foreground: var(--brand-navy);
+  --sidebar-accent: color-mix(in srgb, var(--brand-cream) 8%, var(--brand-burgundy));
+  --sidebar-accent-foreground: var(--brand-cream);
+  --sidebar-border: color-mix(in srgb, var(--brand-cream) 42%, transparent);
+  --sidebar-ring: var(--brand-ochre);
+
+  /* ===== SEMÁNTICOS OSCUROS ===== */
+  --success: color-mix(in srgb, var(--brand-cream) 78%, var(--brand-ochre));
+  --success-foreground: var(--brand-burgundy-deep);
+  --warning: var(--ochre-text);
+  --warning-foreground: var(--brand-navy);
+  --info: color-mix(in srgb, var(--brand-cream) 78%, var(--brand-burgundy));
+  --info-foreground: var(--brand-burgundy-deep);
+  --disabled-foreground: color-mix(in srgb, var(--brand-cream) 38%, transparent);
+
+  /* ===== INLINE COLOR FALLBACKS (DARK) ===== */
+  --badge-bg: var(--brand-ochre);
+  --badge-fg: var(--ochre-text);
+
+  /* Pulse animation color */
+  --pulse-color: var(--brand-ochre);
+
+  /* El lente vira a crema sobre oscuro; la S se queda en ocre — es el ancla. */
+  --sherlock-lens: var(--brand-cream);
+  --sherlock-initial: var(--brand-ochre);
+}
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  /* El lienzo raíz también se pinta con --background: si el body queda light
+     por cualquier regresión o el usuario hace overscroll, el canvas detrás
+     nunca muestra perla en dark. */
+  html {
+    @apply bg-background;
+    /* La barra superior es sticky: cualquier `scrollIntoView` tiene que dejar
+       el destino DEBAJO del header y no tapado por él. */
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    /* Suavizado de fuentes para mejor legibilidad */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Deshabilitar ligatures globalmente para evitar problemas de rendering */
+    font-feature-settings:
+      'liga' 0,
+      'clig' 0;
+    -webkit-font-feature-settings:
+      'liga' 0,
+      'clig' 0;
+    -moz-font-feature-settings:
+      'liga' 0,
+      'clig' 0;
+  }
+
+  /* ===== TIPOGRAFÍA: JERARQUÍA EDITORIAL ===== */
+  /* Escala canónica del design system (12/14/16/18/24/32/48/64). Fraunces solo
+     para la jerarquía editorial (h1/h2); h3 vuelve al sans de UI. Los heros
+     públicos suben a 48/64 con clases explícitas. Cierra D-009 (2026-09-03). */
+  h1,
+  h2 {
+    font-family: var(--font-display), Georgia, serif;
+    @apply tracking-tight;
+  }
+
+  h1 {
+    @apply text-[2rem] leading-tight font-normal;
+  }
+
+  h2 {
+    @apply text-2xl leading-tight font-normal;
+  }
+
+  h3 {
+    @apply text-lg leading-snug font-semibold;
+  }
+
+  /* ===== CIFRAS HUMANAS Y DATOS TÉCNICOS ===== */
+  /* Montos y cifras editoriales conservan el sans de UI, con guarismos
+     tabulares para alinear comparaciones sin adquirir aspecto de código. */
+  .font-figure {
+    font-family: var(--font-sans), sans-serif;
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* Mono queda reservado a IDs, hashes, timestamps y datos machine-facing. */
+  .font-data {
+    font-family: var(--font-mono), monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* ===== SELECTION COLOR ===== */
+  ::selection {
+    background-color: color-mix(in srgb, var(--brand-ochre) 26%, transparent);
+    color: inherit;
+  }
+
+  .dark ::selection {
+    background-color: color-mix(in srgb, var(--brand-ochre) 35%, transparent);
+  }
+
+  /* ===== DISABLE LIGATURES FOR BETTER READABILITY ===== */
+  /* Deshabilitar ligatures en badges, labels y elementos pequeños */
+  /* Las ligatures pueden causar problemas de rendering en textos cortos */
+  .no-ligatures,
+  [data-slot='badge'] {
+    font-feature-settings:
+      'liga' 0,
+      'clig' 0;
+    -webkit-font-feature-settings:
+      'liga' 0,
+      'clig' 0;
+    -moz-font-feature-settings:
+      'liga' 0,
+      'clig' 0;
+  }
+}
+
+/* ============================================================================
+   COMPONENT NORMALIZATION
+   ============================================================================ */
+@layer components {
+  /* ===== DISPOSITIVOS EDITORIALES (BRAND.md §3 y §5) ===== */
+  /* Eyebrow: JetBrains Mono 500, 12px, caps, color de acento. Uno por sección
+     y nombra el tipo de sección; nada más va en mayúsculas. */
+  .eyebrow {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* Regla editorial: el único sitio donde el ocre es geometría al 100%.
+     1px, 48px de ancho, debajo de un h1/h2. Una por superficie. */
+  .rule-editorial {
+    display: block;
+    width: 3rem;
+    height: 1px;
+    background-color: var(--highlight);
+  }
+
+  [data-slot='table-head'] > [role='checkbox'],
+  [data-slot='table-cell'] > [role='checkbox'] {
+    transform: translateY(2px);
+  }
+
+  [data-slot='checkbox'][data-state='checked'] {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  [data-slot='switch'][data-state='checked'] {
+    background-color: var(--primary);
+  }
+
+  [data-slot='switch'][data-state='unchecked'] {
+    background-color: var(--input);
+  }
+
+  .dark [data-slot='switch'][data-state='unchecked'] {
+    background-color: color-mix(in srgb, var(--input) 80%, transparent);
+  }
+
+  /* Los campos NO inventan un cuarto vino: se hunden respecto a la card con el
+     velo marfil que ya traen los primitivos (`dark:bg-input/30`) y se delimitan
+     con `--input`, que cumple 3:1. */
+  .dark [data-slot='input'],
+  .dark [data-slot='textarea'],
+  .dark [data-slot='select-trigger'] {
+    border-color: var(--input);
+  }
+
+  .dark [data-slot='button']:disabled,
+  .dark [data-slot='input']:disabled,
+  .dark [data-slot='textarea']:disabled,
+  .dark [data-slot='select-trigger'][data-disabled],
+  .dark [aria-disabled='true'] {
+    color: var(--disabled-foreground);
+  }
+
+  [data-slot='switch-thumb'][data-state='checked'] {
+    translate: calc(100% - 2px) 0;
+  }
+
+  [data-slot='switch-thumb'][data-state='unchecked'] {
+    translate: 0 0;
+  }
+
+  .dark [data-slot='switch-thumb'][data-state='checked'] {
+    background-color: var(--brand-burgundy-deep);
+  }
+
+  .dark [data-slot='switch-thumb'][data-state='unchecked'] {
+    background-color: var(--foreground);
+  }
+
+  .command-dialog-command [data-slot='command-input-wrapper'] {
+    height: calc(var(--spacing) * 12);
+  }
+
+  /* ===== VISOR PDF: CAPA DE TEXTO ===== */
+  /* `TextLayer` de pdf.js pone un <span> transparente por corrida de texto
+     encima del lienzo rasterizado: así la hoja se lee con lector de pantalla,
+     se busca con Ctrl+F y se selecciona. Las variables son el contrato de
+     `pdfjs-dist/web/pdf_viewer.css` (posición en % de la hoja, tamaño en
+     unidades PDF por `--total-scale-factor`); el visor fija `--scale-factor`
+     y `--user-unit` en cada render con la escala CSS de la hoja, no la del
+     raster, que ya lleva el DPR. La selección pinta el ocre en opacidad y deja
+     el glifo transparente para que se vea el del lienzo. */
+  .pdf-text-layer {
+    --scale-factor: 1;
+    --user-unit: 1;
+    --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+    --scale-round-x: 1px;
+    --scale-round-y: 1px;
+    --min-font-size: 1;
+    --min-font-size-inv: calc(1 / var(--min-font-size));
+    --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: clip;
+    opacity: 1;
+    line-height: 1;
+    letter-spacing: normal;
+    word-spacing: normal;
+    text-align: initial;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+    forced-color-adjust: none;
+    transform-origin: 0 0;
+  }
+
+  .pdf-text-layer :is(span, br) {
+    position: absolute;
+    color: transparent;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0 0;
+    user-select: text;
+  }
+
+  .pdf-text-layer > :not(.markedContent),
+  .pdf-text-layer .markedContent span:not(.markedContent) {
+    --font-height: 0;
+    --scale-x: 1;
+    --rotate: 0deg;
+    z-index: 1;
+    font-size: calc(var(--text-scale-factor) * var(--font-height));
+    transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+  }
+
+  .pdf-text-layer .markedContent {
+    display: contents;
+  }
+
+  .pdf-text-layer ::selection {
+    background: color-mix(in srgb, var(--highlight) 35%, transparent);
+    color: transparent;
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+@layer utilities {
+  /* ===== SHERLOCK SURFACES ===== */
+  .gradient-sherlock {
+    background: var(--primary);
+  }
+
+  .gradient-gold {
+    background: var(--accent);
+  }
+
+  /* ===== ACCENT (glows neutralizados por el aesthetic guard: sin glows) =====
+     Las clases se conservan como no-op para no romper usos existentes; el
+     énfasis ahora se hace con borde 1px / color de marca, no con glow. */
+  .glow-primary,
+  .glow-gold,
+  .dark .glow-primary {
+    box-shadow: none;
+  }
+
+  /* ===== TEXTO DE ACENTO ===== */
+  .text-accent-sherlock {
+    color: var(--accent);
+  }
+
+  .dark .text-accent-sherlock {
+    color: var(--accent);
+  }
+
+  /* ===== NOISE TEXTURE (para fondos) ===== */
+  .noise {
+    position: relative;
+  }
+
+  .noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+}
+
+/* ============================================================================
+   PROSE: VARIANTE EDITORIAL Sherlock (.prose-sherlock)
+   ============================================================================
+   Variante de Tailwind Typography ligada a los tokens de marca para contenido
+   markdown (privacy, terms, etc.). Títulos en vino + serif display, enlaces en
+   acento dorado, código/pre en mono sobre superficie muted, strong en tinta y
+   bordes (hr / blockquote) con la línea de marca. Estilamos los descendientes
+   directamente para que funcione con o sin el plugin de typography, y además
+   exponemos las variables --tw-prose-* para mantener la variante idiomática. */
+@layer utilities {
+  .prose-sherlock {
+    --tw-prose-body: var(--foreground);
+    --tw-prose-headings: var(--primary);
+    --tw-prose-lead: var(--muted-foreground);
+    --tw-prose-links: var(--accent);
+    --tw-prose-bold: var(--foreground);
+    --tw-prose-counters: var(--muted-foreground);
+    --tw-prose-bullets: var(--border);
+    --tw-prose-hr: var(--border);
+    --tw-prose-quotes: var(--foreground);
+    --tw-prose-quote-borders: var(--border);
+    --tw-prose-captions: var(--muted-foreground);
+    --tw-prose-code: var(--foreground);
+    --tw-prose-pre-code: var(--foreground);
+    --tw-prose-pre-bg: var(--muted);
+    --tw-prose-th-borders: var(--border);
+    --tw-prose-td-borders: var(--border);
+    /* En modo oscuro reutilizamos los mismos tokens semánticos (ya invertidos
+       por el tema), de modo que prose-invert también queda alineado a la marca. */
+    --tw-prose-invert-body: var(--foreground);
+    --tw-prose-invert-headings: var(--primary);
+    --tw-prose-invert-lead: var(--muted-foreground);
+    --tw-prose-invert-links: var(--accent);
+    --tw-prose-invert-bold: var(--foreground);
+    --tw-prose-invert-counters: var(--muted-foreground);
+    --tw-prose-invert-bullets: var(--border);
+    --tw-prose-invert-hr: var(--border);
+    --tw-prose-invert-quotes: var(--foreground);
+    --tw-prose-invert-quote-borders: var(--border);
+    --tw-prose-invert-captions: var(--muted-foreground);
+    --tw-prose-invert-code: var(--foreground);
+    --tw-prose-invert-pre-code: var(--foreground);
+    --tw-prose-invert-pre-bg: var(--muted);
+    --tw-prose-invert-th-borders: var(--border);
+    --tw-prose-invert-td-borders: var(--border);
+  }
+
+  .prose-sherlock :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--primary);
+    font-family: var(--font-display), Georgia, serif;
+  }
+
+  .prose-sherlock a {
+    color: var(--accent);
+  }
+
+  .prose-sherlock strong {
+    color: var(--foreground);
+  }
+
+  .prose-sherlock :is(code, pre, kbd, samp) {
+    background-color: var(--muted);
+    font-family: var(--font-mono), monospace;
+  }
+
+  .prose-sherlock hr,
+  .prose-sherlock blockquote {
+    border-color: var(--border);
+  }
+}
+
+/* ============================================================================
+   ANIMACIONES PERSONALIZADAS
+   ============================================================================ */
+@layer utilities {
+  .scrim {
+    background: color-mix(in srgb, var(--brand-navy) 50%, transparent);
+  }
+
+  /* ===== FADE IN UP (para elementos que aparecen) ===== */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.22s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ===== SHIMMER (para loading states) ===== */
+  .animate-shimmer {
+    background: color-mix(in srgb, var(--accent) 8%, var(--card));
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .dark .animate-shimmer {
+    background: color-mix(in srgb, var(--accent) 12%, var(--card));
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* ===== SCALE IN ANIMATION ===== */
+  /* Para elementos que aparecen con escala */
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* ===== REDUCED MOTION ===== */
+  /* Respeta la preferencia del usuario para reducir movimiento */
+  /* Esto es crítico para accesibilidad (vestibular disorders, etc.) */
+  @media (prefers-reduced-motion: reduce) {
+    /* Desactivar animaciones custom */
+    .animate-fade-in-up,
+    .animate-scale-in {
+      animation: none !important;
+    }
+
+    .animate-shimmer {
+      animation: none !important;
+      background: none !important;
+    }
+
+    /* Desactivar TODAS las animaciones y transiciones globalmente */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

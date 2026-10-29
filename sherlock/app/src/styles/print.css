@@ -1,0 +1,245 @@
+/* ============================================================================
+   PRINT STYLES - Sherlock UNIFIED
+   ============================================================================
+   Estilos para impresión de páginas de deals y valuaciones
+   Oculta elementos de navegación y optimiza el layout para papel
+   ============================================================================ */
+
+@media print {
+  /* El papel siempre se imprime en el tema claro. Sin esto, los tokens
+     semánticos que usa esta hoja heredan el tema activo: imprimir con el modo
+     oscuro puesto sacaba bordes borgoña y texto crema sobre papel blanco.
+     Redeclararlos aquí arregla a todos los consumidores de abajo a la vez. */
+  :root,
+  .dark {
+    --paper: #ffffff;
+    --background: var(--brand-cream);
+    --foreground: var(--brand-navy);
+    --card: var(--brand-cream);
+    --muted: color-mix(in srgb, var(--brand-burgundy) 6%, var(--brand-cream));
+    --muted-foreground: color-mix(in srgb, var(--brand-navy) 70%, var(--brand-cream));
+    --border: color-mix(in srgb, var(--brand-navy) 15%, var(--brand-cream));
+  }
+
+  /* ===== OCULTAR ELEMENTOS DE NAVEGACIÓN ===== */
+  header,
+  nav,
+  footer,
+  .navbar,
+  .sidebar,
+  .no-print,
+  [data-print='hide'] {
+    display: none !important;
+  }
+
+  /* ===== OCULTAR BOTONES Y ELEMENTOS INTERACTIVOS ===== */
+  button:not(.print-show),
+  .btn,
+  [role='button'],
+  input,
+  select,
+  textarea,
+  .dropdown-menu,
+  .modal,
+  .dialog,
+  .toast {
+    display: none !important;
+  }
+
+  /* ===== RESET DE COLORES PARA IMPRESIÓN ===== */
+  body {
+    background: var(--paper, #ffffff) !important;
+    color: var(--brand-navy, #0e1a2b) !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ===== CONTENEDOR PRINCIPAL ===== */
+  main,
+  .main-content,
+  [role='main'] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ===== CARDS - SIMPLIFICAR BORDES ===== */
+  .card,
+  [class*='Card'] {
+    border: 1px solid var(--border, #dad9d5) !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* ===== BADGES - CONVERTIR A TEXTO SIMPLE ===== */
+  .badge,
+  [class*='Badge'] {
+    border: 1px solid var(--brand-ochre, #c0873a) !important;
+    background: var(--paper, #ffffff) !important;
+    color: var(--brand-burgundy, #5a2331) !important;
+    padding: 2px 6px !important;
+  }
+
+  /* ===== TABLAS ===== */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th,
+  td {
+    border: 1px solid var(--border, #dad9d5) !important;
+    padding: 8px !important;
+    text-align: left !important;
+  }
+
+  th {
+    background-color: var(--muted, #ede7e1) !important;
+    font-weight: bold !important;
+  }
+
+  /* ===== EVITAR CORTES DE PÁGINA EN MEDIO DE ELEMENTOS ===== */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  p,
+  li,
+  blockquote {
+    orphans: 3 !important;
+    widows: 3 !important;
+  }
+
+  /* ===== LINKS - MOSTRAR URL ===== */
+  a[href]:after {
+    content: ' (' attr(href) ')' !important;
+    font-size: 10pt !important;
+    color: var(--muted-foreground, #545b65) !important;
+  }
+
+  /* No mostrar URL para links internos o botones */
+  a[href^='#']:after,
+  a[href^='javascript']:after,
+  a.no-print-url:after {
+    content: '' !important;
+  }
+
+  /* ===== IMÁGENES ===== */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* ===== GRÁFICOS Y CHARTS ===== */
+  .chart,
+  [class*='chart'],
+  canvas {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* ===== ESPECÍFICO: DEAL DETAIL PAGE ===== */
+  .deal-detail {
+    padding: 0 !important;
+  }
+
+  .deal-detail .deal-header {
+    border-bottom: 2px solid var(--brand-burgundy, #5a2331) !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .deal-detail .deal-amount {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+  }
+
+  /* ===== ESPECÍFICO: VALUATION PAGE ===== */
+  .valuation-results {
+    padding: 0 !important;
+  }
+
+  .valuation-results .summary-card {
+    border: 2px solid var(--brand-burgundy, #5a2331) !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .valuation-results .equity-value {
+    font-size: 24pt !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    padding: 1rem !important;
+    border: 2px solid var(--brand-burgundy, #5a2331) !important;
+  }
+
+  /* ===== RATIOS FINANCIEROS ===== */
+  .financial-ratios .ratio-card {
+    page-break-inside: avoid !important;
+  }
+
+  /* ===== HEADER DE IMPRESIÓN ===== */
+  .print-header {
+    display: block !important;
+    text-align: center !important;
+    margin-bottom: 2rem !important;
+    padding-bottom: 1rem !important;
+    border-bottom: 1px solid var(--border, #dad9d5) !important;
+  }
+
+  .print-header .logo {
+    max-height: 50px !important;
+  }
+
+  .print-header .date {
+    font-size: 10pt !important;
+    color: var(--muted-foreground, #545b65) !important;
+  }
+
+  /* ===== FOOTER DE IMPRESIÓN ===== */
+  .print-footer {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    text-align: center !important;
+    font-size: 9pt !important;
+    color: var(--muted-foreground, #545b65) !important;
+    padding: 0.5rem !important;
+    border-top: 1px solid var(--border, #dad9d5) !important;
+  }
+
+  /* ===== NÚMERO DE PÁGINA ===== */
+  @page {
+    margin: 2cm !important;
+    size: A4 !important;
+  }
+
+  @page :first {
+    margin-top: 3cm !important;
+  }
+}
+
+/* ===== CLASES UTILITARIAS PARA CONTROLAR IMPRESIÓN ===== */
+.no-print {
+  /* Se oculta en @media print arriba */
+}
+
+.print-only {
+  display: none !important;
+}
+
+@media print {
+  .print-only {
+    display: block !important;
+  }
+}
