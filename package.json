@@ -35,15 +35,15 @@
     "journeys:local": "bun scripts/journeys-local.mjs"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "4.1.12",
+    "@vitest/coverage-istanbul": "5.0.5",
     "husky": "^9.1.7",
-    "jszip": "3.10.1",
-    "knip": "6.23.0",
-    "markdownlint-cli2": "0.23.2",
-    "oxlint": "1.82.0",
-    "oxlint-tsgolint": "7.0.2001",
+    "jszip": "3.10.2",
+    "knip": "6.43.0",
+    "markdownlint-cli2": "0.24.0",
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2005",
     "pdf-lib": "1.17.1",
-    "playwright": "1.61.1"
+    "playwright": "1.64.1"
   },
   "overrides": {
     "protobufjs": "^7.5.5",
