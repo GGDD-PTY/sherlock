@@ -1,6 +1,16 @@
 name: Code scanning
 on:
   workflow_dispatch:
+    inputs:
+      provider:
+        description: Runner provider (configured uses this repository's setting)
+        type: choice
+        required: true
+        default: configured
+        options:
+          - configured
+          - github
+          - blacksmith
 permissions:
   contents: read
 concurrency:
@@ -8,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   analyze:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.provider == 'blacksmith' || (inputs.provider == 'configured' && vars.CI_RUNNER_PROVIDER == 'blacksmith')) && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
       contents: read

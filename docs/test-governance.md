@@ -64,10 +64,11 @@ the local bank:
 ## Keep verification named, not automatic
 
 Verification and CodeQL scanning use `workflow_dispatch`, named by Maintainer
-before integrating to `main`. Verification defaults to a standard GitHub runner
-for public-repository portability; Blacksmith requires explicit selection and
-the operator's own enabled installation and allowance. There is no automatic
-provider fallback. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
+before integrating to `main`. The configured runner is selected through the
+repository variable `CI_RUNNER_PROVIDER`; without that setting, it is a standard
+GitHub runner. A manual provider choice overrides the setting for one run.
+Blacksmith uses the operator's own installation and allowance. There is no
+automatic provider fallback. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
 are `exit 0`. Build, coverage, browser matrices, product journeys, live Convex
 integration, observability, autofix, and extra review-bot runs remain manual or
 opt-in. Maintainer controls pushes, merges, and deployments.

@@ -3,11 +3,12 @@ on:
   workflow_dispatch:
     inputs:
       provider:
-        description: Runner provider (Blacksmith requires your own enabled installation)
+        description: Runner provider (configured uses this repository's setting)
         type: choice
         required: true
-        default: github
+        default: configured
         options:
+          - configured
           - github
           - blacksmith
 permissions:
@@ -17,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'blacksmith' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.provider == 'blacksmith' || (inputs.provider == 'configured' && vars.CI_RUNNER_PROVIDER == 'blacksmith')) && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     env:
       NEXT_TELEMETRY_DISABLED: "1"

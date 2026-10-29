@@ -22,7 +22,7 @@ function verificationJob(): Record<string, unknown> {
 }
 
 describe('open-source CI contract', () => {
-  it('defaults to free public runners and selects Blacksmith only by explicit dispatch', () => {
+  it('uses the configured provider with a portable GitHub default', () => {
     const workflowFiles = readdirSync(resolve(REPO_ROOT, '.github/workflows'))
       .filter((name) => /\.ya?ml$/.test(name))
       .sort()
@@ -33,12 +33,12 @@ describe('open-source CI contract', () => {
     const trigger = recordSchema.parse(recordSchema.parse(workflow.on).workflow_dispatch)
     const provider = recordSchema.parse(recordSchema.parse(trigger.inputs).provider)
     expect(provider.type).toBe('choice')
-    expect(provider.default).toBe('github')
-    expect(provider.options).toEqual(['github', 'blacksmith'])
+    expect(provider.default).toBe('configured')
+    expect(provider.options).toEqual(['configured', 'github', 'blacksmith'])
     expect(workflow.permissions).toEqual({ contents: 'read' })
     expect(Object.keys(jobs)).toEqual(['verify'])
     expect(verificationJob()['runs-on']).toBe(
-      "${{ github.event_name == 'workflow_dispatch' && inputs.provider == 'blacksmith' && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}"
+      "${{ github.event_name == 'workflow_dispatch' && (inputs.provider == 'blacksmith' || (inputs.provider == 'configured' && vars.CI_RUNNER_PROVIDER == 'blacksmith')) && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}"
     )
     expect(verificationJob()['timeout-minutes']).toBe(30)
   })
@@ -76,7 +76,8 @@ describe('open-source CI contract', () => {
     const source = readRepo('.github/workflows/ci.yml')
     const steps = stepsSchema.parse(verificationJob().steps)
 
-    expect(source).not.toMatch(/secrets\s*\.|vars\s*\.|id-token\s*:\s*write/)
+    expect(source).not.toMatch(/secrets\s*\.|id-token\s*:\s*write/)
+    expect(source.match(/vars\.[A-Z_]+/g)).toEqual(['vars.CI_RUNNER_PROVIDER'])
     expect(source).not.toMatch(/buildkite|depot-|self-hosted/i)
     expect(source).not.toMatch(/vercel|convex deploy|wrangler|deploy-hook/i)
     expect(verificationJob()).not.toHaveProperty('environment')
@@ -95,11 +96,11 @@ describe('open-source CI contract', () => {
     expect(String(cache.key)).toContain("hashFiles('bun.lock', 'patches/**')")
   })
 
-  it('keeps CodeQL manual, isolated from credentials, and on standard runners', () => {
+  it('keeps CodeQL manual, isolated from credentials, and on the same selected provider', () => {
     const workflow = recordSchema.parse(parse(readRepo('.github/workflows/codeql.yml')))
-    expect(workflow.on).toEqual({ workflow_dispatch: null })
+    expect(Object.keys(recordSchema.parse(workflow.on))).toEqual(['workflow_dispatch'])
     const job = recordSchema.parse(recordSchema.parse(workflow.jobs).analyze)
-    expect(job['runs-on']).toBe('ubuntu-24.04')
+    expect(job['runs-on']).toBe(verificationJob()['runs-on'])
     expect(job.permissions).toEqual({ contents: 'read', 'security-events': 'write' })
     const steps = stepsSchema.parse(job.steps)
     for (const step of steps) if (step.uses) expect(step.uses).toMatch(/@[a-f0-9]{40}$/)

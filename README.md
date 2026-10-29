@@ -65,7 +65,9 @@ Tests use fictional fixtures and mocked service boundaries where appropriate. Se
 
 ## Repository checks and open-source services
 
-Checks remain manual. Open **Actions → Verify → Run workflow** and select a runner provider. The default is a standard GitHub Ubuntu runner, whose compute is free for public repositories. The Blacksmith option uses the operator's existing Blacksmith installation and allowance; it is never selected automatically. Forks do not need a Blacksmith account to run the checks.
+Checks remain manual. Open **Actions → Verify → Run workflow** and select a runner provider. **Configured** uses the repository variable `CI_RUNNER_PROVIDER`: the value `blacksmith` selects Blacksmith; an absent or different value selects a standard GitHub Ubuntu runner. Standard GitHub runner compute is free for public repositories. Forks do not inherit the maintainer's repository variables and do not need a Blacksmith account.
+
+An explicit **GitHub** or **Blacksmith** selection overrides that setting for one run. Blacksmith uses the operator's own enabled installation and allowance. The workflow never retries on a different provider when a run fails.
 
 Both providers run the same locked dependency installation, type checks, lint, and tests. Actions are pinned to commit IDs, checkout credentials are not retained, and only the Bun download cache is saved. No production secrets or deployments are part of verification.
 
