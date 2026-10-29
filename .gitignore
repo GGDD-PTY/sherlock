@@ -23,6 +23,10 @@ node_modules
 backups/
 exports/
 data/
+# This source route deletes intake data; it is not a private data directory.
+!sherlock/app/src/app/api/intake/data/
+sherlock/app/src/app/api/intake/data/*
+!sherlock/app/src/app/api/intake/data/route.ts
 private/
 llm-wiki/
 sherlock-handoffs/
