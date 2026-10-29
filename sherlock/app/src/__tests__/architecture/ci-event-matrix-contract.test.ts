@@ -10,7 +10,7 @@ const recordSchema = z.record(z.string(), z.unknown())
 
 function expectManualOnly(source: string): void {
   const workflow = recordSchema.parse(parse(source))
-  expect(workflow.on).toEqual({ workflow_dispatch: null })
+  expect(Object.keys(recordSchema.parse(workflow.on))).toEqual(['workflow_dispatch'])
 }
 
 const workflowDirectory = resolve(REPO_ROOT, '.github/workflows')
@@ -51,9 +51,10 @@ describe('open-source CI event and security coverage contract', () => {
     ]
 
     for (const contract of securityContracts) {
-      expect(existsSync(resolve(process.cwd(), contract)), `Missing security suite: ${contract}`).toBe(
-        true
-      )
+      expect(
+        existsSync(resolve(process.cwd(), contract)),
+        `Missing security suite: ${contract}`
+      ).toBe(true)
     }
 
     const appPackage = z

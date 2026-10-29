@@ -63,11 +63,22 @@ the local bank:
 
 ## Keep verification named, not automatic
 
-PR Gate is `workflow_dispatch` (`ci.yml`), named by Maintainer before integrating
-to `main`. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
+Verification and CodeQL scanning use `workflow_dispatch`, named by Maintainer
+before integrating to `main`. Verification defaults to a standard GitHub runner
+for public-repository portability; Blacksmith requires explicit selection and
+the operator's own enabled installation and allowance. There is no automatic
+provider fallback. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
 are `exit 0`. Build, coverage, browser matrices, product journeys, live Convex
 integration, observability, autofix, and extra review-bot runs remain manual or
 opt-in. Maintainer controls pushes, merges, and deployments.
+
+Repository-level secret scanning, push protection, private vulnerability
+reporting, and Dependabot alerts are separate from workflow execution.
+Dependabot proposes grouped weekly updates but never merges them; patched MOG
+and Convex packages are excluded from automated updates. There is at most one
+open proposal per ecosystem, keeping the Bun and Actions update paths separate.
+GitHub does not provide security-update PRs for Bun or vulnerability alerts for
+SHA-pinned Actions. Update proposals do not replace security review.
 
 Batch valid feedback into one correction push. A normal PR therefore consumes
 at most one initial cloud cycle and one correction cycle; additional runs need
