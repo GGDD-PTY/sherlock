@@ -1,6 +1,8 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { parse } from 'yaml'
+import { z } from 'zod'
 
 const REPO_ROOT = path.resolve(process.cwd(), '../..')
 const EXPECTED_NODE = '24.22.1'
@@ -32,12 +34,32 @@ describe('project runtime pins', () => {
 
   it.each(
     readdirSync(path.join(REPO_ROOT, '.github/workflows')).filter((file) => /\.ya?ml$/.test(file))
-  )('%s uses the project Node and Bun pins', (workflowFile) => {
-    const workflow = read(`.github/workflows/${workflowFile}`)
+  )('%s pins the project runtimes when its jobs use Bun', (workflowFile) => {
+    const source = read(`.github/workflows/${workflowFile}`)
+    const step = z.object({
+      uses: z.string().optional(),
+      run: z.string().optional(),
+      with: z.record(z.string(), z.unknown()).optional(),
+    })
+    const workflow = z
+      .object({
+        jobs: z.record(z.string(), z.object({ steps: z.array(step) })),
+      })
+      .parse(parse(source))
 
-    expect(workflow).toContain(`node-version: '${EXPECTED_NODE}'`)
-    expect(workflow).toContain(`bun-version: '${EXPECTED_BUN}'`)
-    expect(workflow).not.toMatch(/^\s*BUN_VERSION:/m)
+    for (const job of Object.values(workflow.jobs)) {
+      const node = job.steps.find((entry) => entry.uses?.startsWith('actions/setup-node@'))
+      const bun = job.steps.find((entry) => entry.uses?.startsWith('oven-sh/setup-bun@'))
+      if (job.steps.some((entry) => /\b(?:node|bun)\b/.test(entry.run ?? ''))) {
+        expect(node, `${workflowFile} must install the project Node runtime`).toBeDefined()
+      }
+      if (job.steps.some((entry) => /\bbun\b/.test(entry.run ?? ''))) {
+        expect(bun, `${workflowFile} must install the project Bun runtime`).toBeDefined()
+      }
+      if (node) expect(node.with?.['node-version']).toBe(EXPECTED_NODE)
+      if (bun) expect(bun.with?.['bun-version']).toBe(EXPECTED_BUN)
+    }
+    expect(source).not.toMatch(/^\s*BUN_VERSION:/m)
   })
 
   it('resolves the local Node wrapper from the project pin', () => {

@@ -63,6 +63,20 @@ The reserved `.invalid` address is only for this check. For a hosted installatio
 
 Tests use fictional fixtures and mocked service boundaries where appropriate. See [contributing](CONTRIBUTING.md) and [security](SECURITY.md).
 
+## Repository checks and open-source services
+
+Verification and CodeQL run automatically on pull requests targeting `main` and on pushes to `main`. Pushes and same-repository pull requests use the configured provider: repository variable `CI_RUNNER_PROVIDER=blacksmith` selects Blacksmith; an absent or different value selects a standard GitHub Ubuntu runner. Fork pull requests always use a standard GitHub runner, whose compute is free for public repositories. They do not need a Blacksmith account or installation credentials.
+
+Manual runs remain available under **Actions → Verify → Run workflow**. **Configured** uses the repository setting; an explicit **GitHub** or **Blacksmith** choice overrides it for that run. Blacksmith uses the operator's own enabled installation and allowance. The workflow never retries on a different provider when a run fails. Superseded pull-request runs are cancelled; manual runs already in progress are not.
+
+Both providers run the same locked dependency installation, type checks, lint, and tests. Actions are pinned to commit IDs, checkout credentials are not retained, and only the Bun download cache is saved. No production secrets or deployments are part of verification.
+
+**Actions → Code scanning → Run workflow** runs CodeQL for TypeScript, JavaScript, and GitHub Actions. Code scanning is free for public repositories. Secret scanning, push protection, private vulnerability reporting, and Dependabot alerts are repository settings, separate from a successful CI run.
+
+Dependabot proposes grouped weekly updates for Bun dependencies and SHA-pinned Actions, with at most one open proposal per ecosystem. The patched MOG and Convex dependencies remain under manual maintenance. Updates are never automatically merged. GitHub does not support Dependabot security-update PRs for Bun or vulnerability alerts for SHA-pinned Actions; these update proposals do not establish complete security coverage.
+
+Blacksmith's [OSS sponsorship program](https://www.blacksmith.sh/pricing) has its own eligibility and approval process. An installed Blacksmith app, an available allowance, and approved sponsorship are different states. Neither a Blacksmith allowance nor public-repository status guarantees that GitHub will start a job when the owning account has a billing restriction.
+
 ## License
 
 Sherlock is licensed under [Apache License 2.0](LICENSE). Dependency and asset licenses remain applicable; see [third-party notices](THIRD_PARTY_NOTICES.md). The license does not grant control of the official domain or access to any hosted account or customer data.

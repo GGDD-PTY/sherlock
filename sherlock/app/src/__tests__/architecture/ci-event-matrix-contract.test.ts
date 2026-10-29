@@ -8,9 +8,12 @@ import { z } from 'zod'
 const REPO_ROOT = resolve(process.cwd(), '../..')
 const recordSchema = z.record(z.string(), z.unknown())
 
-function expectManualOnly(source: string): void {
+function expectApprovedEvents(source: string): void {
   const workflow = recordSchema.parse(parse(source))
-  expect(workflow.on).toEqual({ workflow_dispatch: null })
+  const events = recordSchema.parse(workflow.on)
+  expect(Object.keys(events).sort()).toEqual(['pull_request', 'push', 'workflow_dispatch'])
+  expect(events.push).toEqual({ branches: ['main'] })
+  expect(events.pull_request).toEqual({ branches: ['main'] })
 }
 
 const workflowDirectory = resolve(REPO_ROOT, '.github/workflows')
@@ -19,20 +22,20 @@ const workflows = readdirSync(workflowDirectory)
   .map((name) => ({ name, source: readFileSync(resolve(workflowDirectory, name), 'utf8') }))
 
 describe('open-source CI event and security coverage contract', () => {
-  it('requires a human to start every workflow', () => {
+  it('checks pull requests and main pushes while retaining manual dispatch', () => {
     expect(workflows.length).toBeGreaterThan(0)
     for (const workflow of workflows) {
-      expectManualOnly(workflow.source)
+      expectApprovedEvents(workflow.source)
     }
   })
 
-  it.each(['push', 'pull_request', 'schedule', 'workflow_run', 'merge_group'])(
-    'rejects a workflow when an automatic %s trigger is introduced',
+  it.each(['pull_request_target', 'schedule', 'workflow_run', 'merge_group'])(
+    'rejects the unapproved %s trigger',
     (event) => {
       const workflow = recordSchema.parse(parse(workflows[0].source))
-      const mutant = { ...workflow, on: { workflow_dispatch: null, [event]: null } }
+      const mutant = { ...workflow, on: { ...recordSchema.parse(workflow.on), [event]: null } }
       // Exercise the same assertion as the real workflow, with one forbidden event added.
-      expect(() => expectManualOnly(JSON.stringify(mutant))).toThrow()
+      expect(() => expectApprovedEvents(JSON.stringify(mutant))).toThrow()
     }
   )
 
@@ -51,9 +54,10 @@ describe('open-source CI event and security coverage contract', () => {
     ]
 
     for (const contract of securityContracts) {
-      expect(existsSync(resolve(process.cwd(), contract)), `Missing security suite: ${contract}`).toBe(
-        true
-      )
+      expect(
+        existsSync(resolve(process.cwd(), contract)),
+        `Missing security suite: ${contract}`
+      ).toBe(true)
     }
 
     const appPackage = z

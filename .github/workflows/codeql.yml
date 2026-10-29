@@ -1,0 +1,38 @@
+name: Code scanning
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: Runner provider (configured uses this repository's setting)
+        type: choice
+        required: true
+        default: configured
+        options:
+          - configured
+          - github
+          - blacksmith
+permissions:
+  contents: read
+concurrency:
+  group: code-scanning-${{ github.event.pull_request.number || github.ref }}-${{ inputs.provider || 'configured' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  analyze:
+    runs-on: ${{ inputs.provider != 'github' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (inputs.provider == 'blacksmith' || vars.CI_RUNNER_PROVIDER == 'blacksmith') && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: javascript-typescript,actions
+          queries: security-extended
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1

@@ -22,18 +22,24 @@ function verificationJob(): Record<string, unknown> {
 }
 
 describe('open-source CI contract', () => {
-  it('provides one manual verification workflow on a standard GitHub runner', () => {
+  it('uses the configured provider with a portable GitHub default', () => {
     const workflowFiles = readdirSync(resolve(REPO_ROOT, '.github/workflows'))
       .filter((name) => /\.ya?ml$/.test(name))
       .sort()
     const workflow = readWorkflow()
     const jobs = recordSchema.parse(workflow.jobs)
 
-    expect(workflowFiles).toEqual(['ci.yml'])
-    expect(workflow.on).toEqual({ workflow_dispatch: null })
+    expect(workflowFiles).toEqual(['ci.yml', 'codeql.yml'])
+    const trigger = recordSchema.parse(recordSchema.parse(workflow.on).workflow_dispatch)
+    const provider = recordSchema.parse(recordSchema.parse(trigger.inputs).provider)
+    expect(provider.type).toBe('choice')
+    expect(provider.default).toBe('configured')
+    expect(provider.options).toEqual(['configured', 'github', 'blacksmith'])
     expect(workflow.permissions).toEqual({ contents: 'read' })
     expect(Object.keys(jobs)).toEqual(['verify'])
-    expect(verificationJob()['runs-on']).toBe('ubuntu-latest')
+    expect(verificationJob()['runs-on']).toBe(
+      "${{ inputs.provider != 'github' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (inputs.provider == 'blacksmith' || vars.CI_RUNNER_PROVIDER == 'blacksmith') && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}"
+    )
     expect(verificationJob()['timeout-minutes']).toBe(30)
   })
 
@@ -49,13 +55,14 @@ describe('open-source CI contract', () => {
     const bunVersion = rootPackage.packageManager.replace(/^bun@/, '')
     const nodeVersion = /^>=(\d+\.\d+\.\d+)\s/.exec(rootPackage.engines.node)?.[1]
     expect(nodeVersion).toBeDefined()
-    const bunSetup = steps.find((step) => step.uses === 'oven-sh/setup-bun@v2')
-    const nodeSetup = steps.find((step) => step.uses === 'actions/setup-node@v4')
+    const bunSetup = steps.find((step) => String(step.uses).startsWith('oven-sh/setup-bun@'))
+    const nodeSetup = steps.find((step) => String(step.uses).startsWith('actions/setup-node@'))
     const commands = steps.flatMap((step) => (typeof step.run === 'string' ? [step.run] : []))
 
-    expect(steps.filter((step) => step.uses === 'actions/checkout@v4')).toHaveLength(1)
+    const checkout = steps.find((step) => String(step.uses).startsWith('actions/checkout@'))
+    expect(checkout?.with).toEqual({ 'persist-credentials': false })
     expect(bunSetup?.with).toEqual({ 'bun-version': bunVersion })
-    expect(nodeSetup?.with).toEqual({ 'node-version': nodeVersion })
+    expect(nodeSetup?.with).toEqual({ 'node-version': nodeVersion, 'package-manager-cache': false })
     expect(commands).toEqual([
       'bun install --frozen-lockfile',
       'bun run typecheck',
@@ -65,18 +72,63 @@ describe('open-source CI contract', () => {
     expect(rootPackage.scripts.test).toBe('bun --cwd=sherlock/app run test:run')
   })
 
-  it('requires no installation credentials and cannot deploy or call a paid runner', () => {
+  it('requires no installation credentials, pins actions, and cannot deploy', () => {
     const source = readRepo('.github/workflows/ci.yml')
     const steps = stepsSchema.parse(verificationJob().steps)
 
-    expect(source).not.toMatch(/secrets\s*\.|vars\s*\.|id-token\s*:\s*write/)
-    expect(source).not.toMatch(/blacksmith|buildkite|depot-|self-hosted/i)
+    expect(source).not.toMatch(/secrets\s*\.|id-token\s*:\s*write/)
+    expect(source.match(/vars\.[A-Z_]+/g)).toEqual(['vars.CI_RUNNER_PROVIDER'])
+    expect(source).not.toMatch(/buildkite|depot-|self-hosted/i)
     expect(source).not.toMatch(/vercel|convex deploy|wrangler|deploy-hook/i)
     expect(verificationJob()).not.toHaveProperty('environment')
-    expect(steps.flatMap((step) => (step.uses ? [step.uses] : []))).toEqual([
-      'actions/checkout@v4',
-      'actions/setup-node@v4',
-      'oven-sh/setup-bun@v2',
+    const actions = steps.flatMap((step) => (step.uses ? [String(step.uses)] : []))
+    expect(actions.map((action) => action.split('@')[0])).toEqual([
+      'actions/checkout',
+      'actions/setup-node',
+      'oven-sh/setup-bun',
+      'actions/cache',
     ])
+    for (const action of actions) expect(action).toMatch(/@[a-f0-9]{40}$/)
+    const cache = recordSchema.parse(
+      steps.find((step) => String(step.uses).startsWith('actions/cache@'))?.with
+    )
+    expect(cache.path).toBe('~/.bun/install/cache')
+    expect(String(cache.key)).toContain("hashFiles('bun.lock', 'patches/**')")
+  })
+
+  it('keeps CodeQL isolated from credentials and on the same selected provider', () => {
+    const workflow = recordSchema.parse(parse(readRepo('.github/workflows/codeql.yml')))
+    expect(Object.keys(recordSchema.parse(workflow.on)).sort()).toEqual([
+      'pull_request',
+      'push',
+      'workflow_dispatch',
+    ])
+    const job = recordSchema.parse(recordSchema.parse(workflow.jobs).analyze)
+    expect(job['runs-on']).toBe(verificationJob()['runs-on'])
+    expect(job.permissions).toEqual({ contents: 'read', 'security-events': 'write' })
+    const steps = stepsSchema.parse(job.steps)
+    for (const step of steps) if (step.uses) expect(step.uses).toMatch(/@[a-f0-9]{40}$/)
+    expect(readRepo('.github/workflows/codeql.yml')).not.toMatch(
+      /secrets\s*\.|id-token\s*:\s*write|deploy/i
+    )
+  })
+
+  it('groups dependency proposals and preserves patched dependencies', () => {
+    const config = recordSchema.parse(parse(readRepo('.github/dependabot.yml')))
+    const updates = z.array(recordSchema).parse(config.updates)
+    expect(updates.map((update) => update['package-ecosystem']).sort()).toEqual([
+      'bun',
+      'github-actions',
+    ])
+    for (const update of updates) {
+      expect(update['open-pull-requests-limit']).toBe(1)
+      expect(update.schedule).toEqual({ interval: 'weekly' })
+      expect(Object.keys(recordSchema.parse(update.groups))).toHaveLength(1)
+    }
+    const bun = updates.find((update) => update['package-ecosystem'] === 'bun')
+    expect(bun?.directory).toBe('/')
+    expect(bun?.ignore).toEqual(
+      expect.arrayContaining([{ 'dependency-name': '@mog-sdk/*' }, { 'dependency-name': 'convex' }])
+    )
   })
 })

@@ -30,16 +30,16 @@ Update or remove stale source greps, exact-copy/snapshot expectations,
 retired-route or funnel expectations, and private-structure change detectors
 when they contradict current truth.
 
-## Verify only at the pre-merge gate
+## Automatic verification for public contributions
 
-- Per commit / push / open PR: no automatic gate.
-- Pre-merge to `main`: one verification window, after Maintainer orders it.
+- Pull requests targeting `main` and pushes to `main` run verification and CodeQL.
+- Verification includes the locked install, type checks, lint, and unit/security tests.
+- Manual workflow dispatch remains available with an explicit provider choice.
 - `verify:quick`, `verify:local`, coverage and E2E never run as automatic follow-ups.
 
-Do not repeat suites or browser matrices after each change or wave. A general order to
-finish the work does not authorize a test run; Maintainer names the run when the candidate
-is ready to integrate. The fresh human/browser acceptance journey below remains the
-product gate when he requests it.
+Do not add redundant suite runs or browser matrices to this automatic verification.
+The fresh human/browser acceptance journey below remains a separate product gate when
+the Maintainer requests it.
 Automated E2E fixtures stay isolated from seeded local Convex; contaminated
 fixture state is `ENVIRONMENT/FIXTURE`, not a reason to rewrite working product.
 
@@ -61,13 +61,25 @@ the local bank:
   and gets answers from `sala_resumen`, `documento_buscar` and `modelo_resumen`. No
   browser: this one is the terminal path.
 
-## Keep verification named, not automatic
+## Runner selection and execution boundaries
 
-PR Gate is `workflow_dispatch` (`ci.yml`), named by Maintainer before integrating
-to `main`. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
+Pushes and same-repository pull requests use the configured runner selected by
+`CI_RUNNER_PROVIDER`; without that setting, it is a standard GitHub runner.
+Fork pull requests always use a standard GitHub runner, with no installation
+secrets. A manual provider choice overrides the setting for one run.
+Blacksmith uses the operator's own installation and allowance. There is no
+automatic provider fallback. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
 are `exit 0`. Build, coverage, browser matrices, product journeys, live Convex
 integration, observability, autofix, and extra review-bot runs remain manual or
 opt-in. Maintainer controls pushes, merges, and deployments.
+
+Repository-level secret scanning, push protection, private vulnerability
+reporting, and Dependabot alerts are separate from workflow execution.
+Dependabot proposes grouped weekly updates but never merges them; patched MOG
+and Convex packages are excluded from automated updates. There is at most one
+open proposal per ecosystem, keeping the Bun and Actions update paths separate.
+GitHub does not provide security-update PRs for Bun or vulnerability alerts for
+SHA-pinned Actions. Update proposals do not replace security review.
 
 Batch valid feedback into one correction push. A normal PR therefore consumes
 at most one initial cloud cycle and one correction cycle; additional runs need

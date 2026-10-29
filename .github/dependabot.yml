@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    # Bun has no Dependabot security-update support; propose reviewed updates.
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "@mog-sdk/*"
+      - dependency-name: convex
+    groups:
+      dependencies:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Version updates maintain SHA pins; security alerts do not cover SHA refs.
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
