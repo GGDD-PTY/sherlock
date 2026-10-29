@@ -1,5 +1,9 @@
 name: Code scanning
 on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       provider:
@@ -14,11 +18,11 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: code-scanning-${{ github.ref }}
-  cancel-in-progress: false
+  group: code-scanning-${{ github.event.pull_request.number || github.ref }}-${{ inputs.provider || 'configured' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   analyze:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.provider == 'blacksmith' || (inputs.provider == 'configured' && vars.CI_RUNNER_PROVIDER == 'blacksmith')) && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
+    runs-on: ${{ inputs.provider != 'github' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (inputs.provider == 'blacksmith' || vars.CI_RUNNER_PROVIDER == 'blacksmith') && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
       contents: read

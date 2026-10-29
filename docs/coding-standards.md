@@ -37,7 +37,7 @@
 - Add Vitest tests for new mutations, helpers, and compliance logic.
 - Add Playwright tests for new user-facing flows.
 - Run the narrowest useful check first, then broader checks when the surface is shared.
-- Nothing runs on commit or push, and nothing runs on opening a PR. Maintainer names the run. See `docs/test-governance.md` for how to adjudicate a red.
+- Verification and CodeQL run on pull requests targeting `main` and pushes to `main`. Manual runs remain available. Local hooks, browser journeys, production builds, and deployments do not run automatically. See `docs/test-governance.md` for how to adjudicate a red.
 
 ## AI Rules
 

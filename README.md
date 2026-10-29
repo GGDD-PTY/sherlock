@@ -65,9 +65,9 @@ Tests use fictional fixtures and mocked service boundaries where appropriate. Se
 
 ## Repository checks and open-source services
 
-Checks remain manual. Open **Actions → Verify → Run workflow** and select a runner provider. **Configured** uses the repository variable `CI_RUNNER_PROVIDER`: the value `blacksmith` selects Blacksmith; an absent or different value selects a standard GitHub Ubuntu runner. Standard GitHub runner compute is free for public repositories. Forks do not inherit the maintainer's repository variables and do not need a Blacksmith account.
+Verification and CodeQL run automatically on pull requests targeting `main` and on pushes to `main`. Pushes and same-repository pull requests use the configured provider: repository variable `CI_RUNNER_PROVIDER=blacksmith` selects Blacksmith; an absent or different value selects a standard GitHub Ubuntu runner. Fork pull requests always use a standard GitHub runner, whose compute is free for public repositories. They do not need a Blacksmith account or installation credentials.
 
-An explicit **GitHub** or **Blacksmith** selection overrides that setting for one run. Blacksmith uses the operator's own enabled installation and allowance. The workflow never retries on a different provider when a run fails.
+Manual runs remain available under **Actions → Verify → Run workflow**. **Configured** uses the repository setting; an explicit **GitHub** or **Blacksmith** choice overrides it for that run. Blacksmith uses the operator's own enabled installation and allowance. The workflow never retries on a different provider when a run fails. Superseded pull-request runs are cancelled; manual runs already in progress are not.
 
 Both providers run the same locked dependency installation, type checks, lint, and tests. Actions are pinned to commit IDs, checkout credentials are not retained, and only the Bun download cache is saved. No production secrets or deployments are part of verification.
 

@@ -38,7 +38,7 @@ describe('open-source CI contract', () => {
     expect(workflow.permissions).toEqual({ contents: 'read' })
     expect(Object.keys(jobs)).toEqual(['verify'])
     expect(verificationJob()['runs-on']).toBe(
-      "${{ github.event_name == 'workflow_dispatch' && (inputs.provider == 'blacksmith' || (inputs.provider == 'configured' && vars.CI_RUNNER_PROVIDER == 'blacksmith')) && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}"
+      "${{ inputs.provider != 'github' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (inputs.provider == 'blacksmith' || vars.CI_RUNNER_PROVIDER == 'blacksmith') && 'blacksmith-4vcpu-ubuntu-2404' || 'ubuntu-24.04' }}"
     )
     expect(verificationJob()['timeout-minutes']).toBe(30)
   })
@@ -96,9 +96,13 @@ describe('open-source CI contract', () => {
     expect(String(cache.key)).toContain("hashFiles('bun.lock', 'patches/**')")
   })
 
-  it('keeps CodeQL manual, isolated from credentials, and on the same selected provider', () => {
+  it('keeps CodeQL isolated from credentials and on the same selected provider', () => {
     const workflow = recordSchema.parse(parse(readRepo('.github/workflows/codeql.yml')))
-    expect(Object.keys(recordSchema.parse(workflow.on))).toEqual(['workflow_dispatch'])
+    expect(Object.keys(recordSchema.parse(workflow.on)).sort()).toEqual([
+      'pull_request',
+      'push',
+      'workflow_dispatch',
+    ])
     const job = recordSchema.parse(recordSchema.parse(workflow.jobs).analyze)
     expect(job['runs-on']).toBe(verificationJob()['runs-on'])
     expect(job.permissions).toEqual({ contents: 'read', 'security-events': 'write' })

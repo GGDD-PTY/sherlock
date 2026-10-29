@@ -30,16 +30,16 @@ Update or remove stale source greps, exact-copy/snapshot expectations,
 retired-route or funnel expectations, and private-structure change detectors
 when they contradict current truth.
 
-## Verify only at the pre-merge gate
+## Automatic verification for public contributions
 
-- Per commit / push / open PR: no automatic gate.
-- Pre-merge to `main`: one verification window, after Maintainer orders it.
+- Pull requests targeting `main` and pushes to `main` run verification and CodeQL.
+- Verification includes the locked install, type checks, lint, and unit/security tests.
+- Manual workflow dispatch remains available with an explicit provider choice.
 - `verify:quick`, `verify:local`, coverage and E2E never run as automatic follow-ups.
 
-Do not repeat suites or browser matrices after each change or wave. A general order to
-finish the work does not authorize a test run; Maintainer names the run when the candidate
-is ready to integrate. The fresh human/browser acceptance journey below remains the
-product gate when he requests it.
+Do not add redundant suite runs or browser matrices to this automatic verification.
+The fresh human/browser acceptance journey below remains a separate product gate when
+the Maintainer requests it.
 Automated E2E fixtures stay isolated from seeded local Convex; contaminated
 fixture state is `ENVIRONMENT/FIXTURE`, not a reason to rewrite working product.
 
@@ -61,12 +61,12 @@ the local bank:
   and gets answers from `sala_resumen`, `documento_buscar` and `modelo_resumen`. No
   browser: this one is the terminal path.
 
-## Keep verification named, not automatic
+## Runner selection and execution boundaries
 
-Verification and CodeQL scanning use `workflow_dispatch`, named by Maintainer
-before integrating to `main`. The configured runner is selected through the
-repository variable `CI_RUNNER_PROVIDER`; without that setting, it is a standard
-GitHub runner. A manual provider choice overrides the setting for one run.
+Pushes and same-repository pull requests use the configured runner selected by
+`CI_RUNNER_PROVIDER`; without that setting, it is a standard GitHub runner.
+Fork pull requests always use a standard GitHub runner, with no installation
+secrets. A manual provider choice overrides the setting for one run.
 Blacksmith uses the operator's own installation and allowance. There is no
 automatic provider fallback. There is no Buildkite. Husky `pre-commit` / `pre-push` / `commit-msg`
 are `exit 0`. Build, coverage, browser matrices, product journeys, live Convex
